@@ -1,0 +1,7 @@
+build/
+*.so
+*.o
+*.root
+.python_history
+generate_calorimeter.py
+fix_build.py
