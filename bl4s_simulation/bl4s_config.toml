@@ -1,0 +1,24 @@
+[TriggerModuleSatellite._default]
+# TriggerModule uses internal logic, no extra config needed unless rate is desired
+
+[MockCalorimeter._default]
+rate = 100.0
+channels = 16
+
+[MockDWC._default]
+rate = 100.0
+
+[MockScintillator._default]
+rate = 100.0
+num_counters = 4
+
+[MockQDC._default]
+rate = 100.0
+channels = 32
+
+[MockTimePix._default]
+rate = 100.0
+
+[H5DataWriter._default]
+output_directory = "/home/kayra/bl4s_data"
+# receive_from = ["MockCalorimeter", "MockDWC", "MockScintillator"] # Not necessary since receiver grabs all by default if not specified

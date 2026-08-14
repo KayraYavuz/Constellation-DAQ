@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bl4s_satellites"
+version = "0.0.1"
+description = "Mock Satellites for BL4S TDAQ Simulation"
+requires-python = ">=3.11"
+dependencies = [
+    "ConstellationDAQ",
+]
+
+[project.scripts]
+MockTrigger = "bl4s_satellites.MockTrigger:main"
+MockCalorimeter = "bl4s_satellites.MockCalorimeter:main"
+MockTracker = "bl4s_satellites.MockTracker:main"
