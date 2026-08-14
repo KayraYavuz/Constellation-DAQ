@@ -53,6 +53,13 @@ Constellation consists of core C++ applications (like MissionControl and Observa
 2. Set the WSL networking mode to **Mirrored** in the `.wslconfig` file.
 3. Follow the Linux installation instructions inside the WSL terminal.
 
+**CERN / TDAQ Environment (CVMFS)**
+If you are deploying on real DAQ machines at CERN (e.g., in the BL4S control room), Constellation and its dependencies can be sourced directly from the CernVM File System (CVMFS), eliminating the need to compile from source. This is the standard procedure for actual beamline operations:
+```bash
+# Example of loading the LCG environment and Constellation from CVMFS
+source /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-el9-gcc13-opt/setup.sh
+```
+
 > **Network Note:** Ensure your firewall is not blocking ZeroMQ UDP discovery packets. If satellites cannot see each other, try temporarily disabling your local firewall.
 
 ### 2.2 Python Environment Setup
@@ -73,15 +80,17 @@ pip install "ConstellationDAQ[cli]" h5py matplotlib numpy
 
 ---
 
-## 3. The Mock Detector Suite
+## 3. The Detector Suite (Hardware & Simulation)
 
-This repository provides a highly configurable suite of Python-based Mock Satellites. These satellites simulate realistic physics data acquisition without requiring physical hardware. 
+Constellation is built to interface directly with physical detector hardware on the beamline. Real satellites connect to VME crates, CAEN digitizers, AIDA TLUs, Timepix3 readouts, and other physical NIM modules via C++ or Python interfaces.
 
-> **Note:** These detectors are designed to be entirely generic. The specific beam conditions, incident particle energies, and target materials are left entirely to the operator to define via subsequent analysis. 
+However, developing and testing a DAQ without physical beam time requires simulation. This repository provides a highly configurable suite of **Mock Satellites** that mimic real hardware behavior.
 
-Available Mock Satellites:
+> **Note:** Whether you are using real hardware or mock satellites, the Constellation FSM and network protocol remain identical. The specific beam conditions, incident particle energies, and target materials are defined by the physical setup or your offline analysis.
+
+Available Mock Satellites (for Development & Testing):
 * **TriggerModuleSatellite**: Acts as the master clock, generating synchronous trigger events for all other satellites.
-* **MockQDC**: Simulates a multi-channel Charge-to-Digital Converter.
+* **MockQDC**: Simulates a multi-channel Charge-to-Digital Converter (analogous to CAEN V965).
 * **MockCalorimeter**: Simulates energy deposition in a grid-based calorimeter structure.
 * **MockTimePix**: Simulates pixel-detector hit matrices for particle tracking.
 * **MockDWC**: Simulates Delay Wire Chambers for beam profiling.
@@ -129,8 +138,8 @@ mkdir -p ./data_output
 SatelliteH5DataWriter -g bl4s
 ```
 
-### Step 5.2: Launch the Mock Satellites
-Open new terminal tabs, activate your `venv`, and start your detectors:
+### Step 5.2: Launch the Satellites (Mock or Physical)
+Open new terminal tabs, activate your `venv`, and start your detectors (or start your physical C++ satellite binaries):
 ```bash
 python3 bl4s_simulation/src/bl4s_satellites/TriggerModuleSatellite.py -g bl4s
 python3 bl4s_simulation/src/bl4s_satellites/MockQDC.py -g bl4s
