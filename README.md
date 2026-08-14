@@ -1,12 +1,27 @@
-# BL4S Constellation DAQ Tutorial
+# BL4S Constellation DAQ: Comprehensive Setup and Operations Guide
 
-Welcome to the Beamline for Schools (BL4S) Constellation tutorial. In this guide, we will implement a fully functional Data Acquisition (DAQ) system using **Constellation**, simulating a 5 GeV particle beam hitting a 60 cm Tungsten target. 
+Welcome to the Beamline for Schools (BL4S) Constellation tutorial. In this guide, we will implement a fully functional Data Acquisition (DAQ) system using the **Constellation** framework. 
 
-We will cover the installation, adding mock physical detectors (QDC, Calorimeter, TimePix), controlling the DAQ via MissionControl, and extracting meaningful physics data (Kaons, Pions, Electrons) using Python and HDF5.
+This tutorial is designed to provide a comprehensive understanding of how to set up, configure, and operate a distributed DAQ system for test beam experiments. Instead of relying on specific beam energies or physical targets, this guide uses a generalized suite of **Mock Satellites** that simulate common high-energy physics detectors (like Cherenkov detectors, QDCs, Calorimeters, and pixel trackers).
 
 ---
 
-## 1. Installation
+## 1. Core Concepts of Constellation
+
+Before diving into the installation, it is crucial to understand the terminology and architecture of Constellation:
+
+- **Satellites**: In Constellation, every participant in the DAQ—whether it is a physical piece of hardware, a Python simulation script, or a data-writing service—is called a *satellite*. Satellites run as independent processes and communicate over the network.
+- **Group**: Satellites are organized into groups (e.g., `bl4s`). Only satellites within the same group can communicate with each other.
+- **ZeroMQ (ØMQ)**: The underlying messaging protocol. It allows for lightning-fast, decentralized communication without a central broker.
+- **FSM (Finite State Machine)**: Every satellite follows a strict set of states to ensure the DAQ operates safely:
+  - `NEW`: The satellite has just started and has no configuration.
+  - `INIT`: The satellite has received its configuration (via TOML) and initialized its hardware/software.
+  - `ORBIT`: The satellite is fully ready to take data.
+  - `RUN`: The satellite is actively acquiring data and transmitting payloads.
+
+---
+
+## 2. Installation
 
 Constellation is highly portable and supports multiple operating systems.
 
@@ -25,44 +40,45 @@ Constellation is highly portable and supports multiple operating systems.
 - Set the WSL networking mode to **Mirrored** in the WSL Settings.
 - Install Constellation inside WSL following the Linux instructions.
 
-> [!WARNING]
-> **Firewall:** It might be needed to disable your firewall temporarily in case Constellation does not detect any satellites in your local network.
+> **Firewall Warning:** It might be needed to disable your firewall temporarily in case Constellation does not detect any satellites in your local network.
 
 ---
 
-## 2. Preparing the BL4S Workspace
+## 3. Preparing the BL4S Mock Workspace
 
-Instead of real hardware, we will use **Mock Satellites** that generate realistic physics data. These Python-based satellites pretend to be hardware modules (like the V792 QDC or a TimePix tracker).
+In a real experiment, satellites connect to physical NIM crates, VME modules, or USB boards. For this tutorial, we use **Python Mock Satellites** that generate realistic physics data.
 
-1. Create a virtual environment and activate it:
+### Environment Setup
+1. Clone this repository to your local machine.
+2. Create a virtual environment and activate it:
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
-2. Install the Constellation Python bindings:
+3. Install the Constellation Python bindings:
    ```bash
    pip install "ConstellationDAQ[cli]"
    ```
 
 ### Understanding the Mock Detectors
-Our simulation includes the following detectors, all tied to the same random seed per event to guarantee synchronized physics interactions:
-- **MockQDC**: Simulates a 32-channel Charge-to-Digital Converter.
-  - *Ch0 & Ch1*: Scintillators S2 & S3 (MIP Signals)
-  - *Ch2*: Calorimeter (Electromagnetic shower for $e^-$, MIP for hadrons)
-  - *Ch3 & Ch4*: Cherenkov C0 & C1 for Particle Identification (PID).
-- **MockTimePix**: Generates 2D hit maps of the particle tracks.
-- **MockScintillator (WENDI)**: A cumulative scaler that detects secondary neutrons.
+Our simulation includes the following detector satellites, which independently generate correlated physics events using synchronized random seeds:
+- **MockQDC**: Simulates a 32-channel Charge-to-Digital Converter. Useful for simulating Scintillators (MIP Signals) and Cherenkov threshold detectors.
+- **MockCalorimeter**: Simulates electromagnetic and hadronic showers.
+- **MockTimePix**: Generates 2D hit maps representing particle tracks.
+- **MockScintillator**: Acts as a cumulative scaler (e.g., simulating neutron detectors or trigger counters).
 
 ---
 
-## 3. Configuration (TOML)
+## 4. Configuration (TOML)
 
-Before the satellites can be initialized, a configuration file is needed. Create a file called `bl4s_config.toml` in your working directory.
+Before any satellite can transition from `NEW` to `INIT`, it requires a configuration. Constellation uses `.toml` files for this purpose.
+
+Create a file called `bl4s_config.toml` in your working directory. This file dictates how many channels each detector has and how fast it should operate:
 
 ```toml
 [MockQDC._default]
 channels = 32
-rate = 100.0
+rate = 100.0 # Operates at 100 Hz
 
 [MockCalorimeter._default]
 channels = 16
@@ -73,92 +89,90 @@ matrix_size = 256
 rate = 100.0
 
 [H5DataWriter._default]
-# This satellite records all the data to the disk
+# This satellite listens to the data streams and records them to disk
 output_dir = "~/bl4s_data"
 ```
 
 ---
 
-## 4. Controlling the DAQ (MissionControl)
+## 5. Controlling the DAQ (MissionControl)
 
-In Constellation, each participant in the data acquisition is called a **satellite**. Each satellite has a Finite State Machine (FSM): `NEW -> INIT -> ORBIT -> RUN`.
+MissionControl is the central graphical interface used to orchestrate all satellites.
 
-### Starting the Satellites
+### Step 5.1: Starting the Satellite Processes
 Open multiple terminal windows, activate your `venv`, and start your satellites under the `bl4s` group:
 ```bash
-python3 src/bl4s_satellites/MockQDC.py -g bl4s
-python3 src/bl4s_satellites/MockCalorimeter.py -g bl4s
+python3 bl4s_simulation/src/bl4s_satellites/MockQDC.py -g bl4s
+python3 bl4s_simulation/src/bl4s_satellites/MockCalorimeter.py -g bl4s
 SatelliteH5DataWriter -g bl4s
 ```
 
-### Using MissionControl
+### Step 5.2: Orchestrating via MissionControl
 1. Start **MissionControl** from your application menu or terminal.
 2. Enter the group name `bl4s` to connect.
-3. In the main window, all your satellites (QDC, Calorimeter, H5DataWriter) will appear in the list.
+3. In the main window, all your active satellites (`MockQDC`, `MockCalorimeter`, `H5DataWriter`) will appear. They will initially be in the `NEW` state.
 4. Click **Load Config** and select your `bl4s_config.toml` file.
-5. Click **Initialize** to send configurations to the satellites (State: `INIT`).
-6. Click **Launch** to prepare them for data taking (State: `ORBIT`).
-7. Click **Start** to begin taking data (State: `RUN`).
-   - The system is now simulating a 5 GeV beam!
-8. Wait for ~10 seconds, then click **Stop**.
+5. Click **Initialize**. The FSM will transition the satellites to the `INIT` state. The hardware/software is now configured.
+6. Click **Launch**. The satellites transition to `ORBIT`, standing by for the run.
+7. Click **Start**. The satellites enter the `RUN` state and begin acquiring and transmitting data.
+8. Wait for your desired duration, then click **Stop** to safely halt data acquisition and flush the files to disk.
 
 ---
 
-## 5. Observation and Telemetry
+## 6. Observation and Telemetry
 
-While the experiment is running in the `RUN` state, you can monitor the health and logs of your DAQ.
+Constellation provides dedicated tools for real-time monitoring while the system is in the `RUN` state.
 
-### Observatory
-Start **Observatory**, the graphical logging interface. Under *Individual Subscriptions*, you can select the `DEBUG` or `INFO` log level for the `MockQDC` satellite. Every time a transition happens, you will see exactly what the satellite is doing.
+### Observatory (Logging)
+Observatory is the graphical logging interface. It aggregates logs from all distributed satellites into a single view.
+1. Start **Observatory**.
+2. Connect to the `bl4s` group.
+3. Under *Individual Subscriptions*, select the `INFO` or `DEBUG` log level for your satellites.
+4. You will see real-time log messages indicating exactly what each satellite is doing (e.g., "MockQDC initialized with 32 channels").
 
-### TelemetryConsole
-If you want to view the Trigger Rate or Hardware Status:
+### TelemetryConsole (Metrics)
+TelemetryConsole allows you to monitor live metrics, such as trigger rates, temperatures, or CPU usage.
 1. Start **TelemetryConsole**.
-2. Select your `TriggerModuleSatellite` as the sender.
-3. Select the `SWTRIG` metric (Software Trigger rate).
-4. Click **Create** to plot a live, real-time graph of how many particles per second your DAQ is processing.
+2. Connect to the `bl4s` group.
+3. Select your Trigger satellite (if active) as the sender.
+4. Select the `SWTRIG` metric (Software Trigger rate).
+5. Click **Create** to plot a live, real-time graph of how many events per second your DAQ is processing.
 
 ---
 
-## 6. Offline Data Analysis (HDF5)
+## 7. Offline Data Analysis (HDF5)
 
-Unlike the old TDAQ which wrote `.root` files, Constellation uses the modern, lightning-fast **HDF5 (`.h5`)** format.
+Unlike older DAQ systems that write `.root` files natively, Constellation writes data in the modern, highly parallelizable **HDF5 (`.h5`)** format.
 
-When you clicked **Stop** in MissionControl, the `H5DataWriter` saved a file like `data_run_1.h5` in your `~/bl4s_data/` folder.
+When you clicked **Stop** in MissionControl, the `H5DataWriter` saved a file (e.g., `data_run_1.h5`) in your specified `output_dir` (e.g., `~/bl4s_data/`).
 
-To extract the physical PID (Particle Identification) data—for example, separating Kaons from Pions—you can use Python and `h5py`. 
+### Analyzing the Data with Python
+To extract the physical payloads from the HDF5 file, you can use Python with `h5py` and `matplotlib`. The `analysis_scripts/` folder in this repository contains ready-to-use scripts for unpacking the binary data.
 
-Create an analysis script `analyze_data.py`:
+For example, to analyze the QDC data:
+```bash
+python3 analysis_scripts/analyze_h5_qdc.py
+```
+
+**How it works under the hood:**
 ```python
 import h5py
 import struct
-import matplotlib.pyplot as plt
 
-# Open the Constellation data file
 with h5py.File("data_run_1.h5", "r") as f:
-    calorimeter_qdc = []
-    cherenkov_qdc = []
-    
-    # Traverse the HDF5 tree looking for MockQDC blocks
     def process_node(name, node):
+        # Locate the specific dataset block inside the HDF5 tree
         if "mockqdc" in name.lower() and "block" in name.lower():
             raw_bytes = node[:].tobytes()
-            # Unpack 32 unsigned short integers (2 bytes each)
+            
+            # The QDC payload is packed as 32 unsigned short integers (2 bytes each).
+            # We use struct.unpack to convert the raw C++ bytes back into Python integers.
             channels = struct.unpack("<32H", raw_bytes)
             
-            calorimeter_qdc.append(channels[2])
-            cherenkov_qdc.append(channels[3])
+            # Access Channel 0 (e.g., Scintillator 2)
+            scintillator_value = channels[0]
             
     f.visititems(process_node)
-
-# Plot the physics data
-plt.hist2d(calorimeter_qdc, cherenkov_qdc, bins=50, cmap='viridis')
-plt.xlabel("Calorimeter QDC (Energy)")
-plt.ylabel("Cherenkov C0 QDC")
-plt.title("Particle Identification (e- vs Hadrons)")
-plt.show()
 ```
 
-Run this script to visualize how the simulated $e^-$ shower creates a massive peak at ~800 QDC, while Pions and Kaons cluster at the ~150 MIP peak.
-
-**Congratulations! You have successfully deployed, monitored, and analyzed a Constellation DAQ system for BL4S.**
+By adapting these Python scripts (or migrating them into Jupyter Notebooks), you can perform advanced Particle Identification (PID), generate hit maps, and evaluate detector performance with ease.
