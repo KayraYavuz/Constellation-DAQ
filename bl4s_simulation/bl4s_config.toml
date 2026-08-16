@@ -20,5 +20,5 @@ channels = 32
 rate = 100.0
 
 [H5DataWriter._default]
-output_directory = "/home/kayra/bl4s_data"
+output_directory = "/eos/user/k/kyavuz/bl4s_data"
 # receive_from = ["MockCalorimeter", "MockDWC", "MockScintillator"] # Not necessary since receiver grabs all by default if not specified
