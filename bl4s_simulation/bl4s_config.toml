@@ -1,24 +1,24 @@
-[TriggerModuleSatellite._default]
-# TriggerModule uses internal logic, no extra config needed unless rate is desired
-
-[MockCalorimeter._default]
-rate = 100.0
-channels = 16
-
-[MockDWC._default]
-rate = 100.0
-
-[MockScintillator._default]
-rate = 100.0
-num_counters = 4
-
-[MockQDC._default]
-rate = 100.0
-channels = 32
-
-[MockTimePix._default]
-rate = 100.0
-
-[H5DataWriter._default]
+[H5DataWriter.pc_bl4s_07]
 output_directory = "/eos/user/k/kyavuz/bl4s_data"
-# receive_from = ["MockCalorimeter", "MockDWC", "MockScintillator"] # Not necessary since receiver grabs all by default if not specified
+flush_interval = 10.0
+
+[TriggerModuleSatellite.pc_bl4s_07]
+# Basic trigger module configuration
+trigger_rate = 100.0
+
+[ScintillatorSatellite.pc_bl4s_07]
+channels = 2
+rate = 100.0
+
+[TimepixSatellite.pc_bl4s_07]
+rate = 100.0
+
+[CherenkovSatellite.pc_bl4s_07]
+rate = 100.0
+
+[CalorimeterSatellite.pc_bl4s_07]
+channels = 16
+rate = 100.0
+
+[PrometheusExporter.pc_bl4s_07]
+metrics_port = 9100

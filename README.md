@@ -1,219 +1,238 @@
-# Constellation DAQ: Complete Operator Guide & Tutorial
+# Constellation DAQ: Complete Operator Guide & Real-Time Observability Suite
 
-Welcome to the comprehensive guide for operating the Constellation Data Acquisition (DAQ) framework using the simulated mock satellites provided in this repository. This guide mirrors the official Constellation Operator Guide, providing you with a deep dive into setting up, configuring, running, and analyzing a decentralized DAQ system.
+Welcome to the comprehensive guide for operating the Constellation Data Acquisition (DAQ) framework and the **Extended Real-Time Observability & Monitoring Suite** developed for the Beamline for Schools (BL4S) experiment.
+
+This repository provides:
+1. **Core Constellation DAQ & Mock Detector Suite**: Complete framework setup, FSM orchestration, and Geant4/Allpix² physics replays.
+2. **Prometheus & Grafana Telemetry**: Slow-control telemetry dashboard for real-time detector health, high voltage, temperatures, and throughput.
+3. **Kafka Real-Time Streaming Pipeline**: Zero-latency distributed event streaming directly from detector frontends.
+4. **BL4S Live Event Explorer (Observability UI)**: Web-based control room interface featuring a hierarchical tree explorer and interactive Chart.js histograms, heatmaps, and PID spectra (similar to ATLAS/CMS TDAQ OHP).
 
 ---
 
 ## Table of Contents
 1. [What is Constellation?](#1-what-is-constellation)
-2. [Installation](#2-installation)
-3. [The Mock Detector Suite](#3-the-mock-detector-suite)
-4. [Configuration (TOML)](#4-configuration-toml)
-5. [Step-by-Step Operating Tutorial](#5-step-by-step-operating-tutorial)
-6. [Live Monitoring (Observatory & Telemetry)](#6-live-monitoring-observatory--telemetry)
-7. [Offline Data Analysis (HDF5)](#7-offline-data-analysis-hdf5)
+2. [Observability vs. Telemetry: Architecture Comparison](#2-observability-vs-telemetry-architecture-comparison)
+3. [Technology Stack & System Architecture](#3-technology-stack--system-architecture)
+4. [Installation & Prerequisites](#4-installation--prerequisites)
+5. [The Detector Suite (Hardware & Simulation)](#5-the-detector-suite-hardware--simulation)
+6. [Configuration (TOML)](#6-configuration-toml)
+7. [Step-by-Step Operating Tutorial](#7-step-by-step-operating-tutorial)
+8. [Real-Time Monitoring & Observability Stack](#8-real-time-monitoring--observability-stack)
+   - [8.1 BL4S Live Event Explorer (Web UI)](#81-bl4s-live-event-explorer-web-ui)
+   - [8.2 Grafana Control Room Dashboard](#82-grafana-control-room-dashboard)
+   - [8.3 Live Kafka Calorimeter Viewer](#83-live-kafka-calorimeter-viewer)
+9. [Offline Data Analysis (HDF5)](#9-offline-data-analysis-hdf5)
 
 ---
 
 ## 1. What is Constellation?
 
-Constellation is a decentralized, network-based Data Acquisition (DAQ) framework primarily designed for High Energy Physics (HEP) test beam experiments. Unlike traditional DAQ systems that rely on a central event builder or master node, Constellation delegates autonomy to individual participants called **Satellites**.
+Constellation is a decentralized, network-based Data Acquisition (DAQ) framework primarily designed for High Energy Physics (HEP) test beam experiments at DESY and CERN. Unlike traditional DAQ systems that rely on a central event builder or master node, Constellation delegates autonomy to individual participants called **Satellites**.
 
 ### Core Architecture Concepts:
-* **Satellites**: The fundamental building blocks of Constellation. A satellite can be a hardware interface (reading out a sensor), a software service (writing data to disk), or a mock simulation.
-* **Groups**: Satellites are segmented into isolated network groups (e.g., `bl4s`). Only satellites within the same group can communicate with each other.
-* **ZeroMQ (ØMQ)**: Constellation utilizes ZeroMQ for all underlying network communication, providing robust, broker-less messaging.
-* **Finite State Machine (FSM)**: Every satellite adheres to a strict FSM. Understanding these states is critical for operation:
-  * `NEW`: The satellite is running but has no configuration.
-  * `INIT`: The satellite has received its `.toml` configuration and initialized its internal components.
-  * `ORBIT`: The satellite is fully ready and waiting for the global start signal.
-  * `RUN`: The satellite is actively acquiring data, generating triggers, and transmitting payloads.
-  * `SAFE`: A safe fallback state.
-  * `ERROR`: A state entered if a hardware or software fault occurs.
+* **Satellites**: Independent processes interfacing with hardware (readout electronics) or software services (event writer).
+* **Groups**: Logical network segmentation (e.g., `bl4s`). Only satellites in the same group discover and communicate with each other.
+* **ZeroMQ (ØMQ)**: Underlying asynchronous messaging protocol using CDTP (Constellation Data Transport Protocol), CSCP (Control Protocol), and CMDP (Monitoring Protocol).
+* **Finite State Machine (FSM)**:
+  * `NEW`: Satellite process running, waiting for configuration.
+  * `INIT`: Loaded TOML configuration and allocated hardware buffers.
+  * `ORBIT`: Connected to network, discovered peers, ready to start.
+  * `RUN`: Actively taking data, generating triggers, and pushing events.
+  * `SAFE`: Safe fallback state upon error or interrupt.
 
 ---
 
-## 2. Installation
+## 2. Observability vs. Telemetry: Architecture Comparison
 
-Constellation consists of core C++ applications (like MissionControl and Observatory) and Python bindings for custom satellite development.
+Constellation comes out of the box with standard tools (**MissionControl**, **Observatory**, and **TelemetryConsole**). However, for real-time physics inspection and online quality control (DQM), a full observability stack was built on top of it.
 
-### 2.1 Core Framework Installation
+| Feature / Dimension | Built-in Constellation (Observatory & TelemetryConsole) | **Our Extended Real-Time DAQ Observability Stack** |
+| :--- | :--- | :--- |
+| **Data Scope** | Single scalar numbers (`stat("temp", 24.5)`) | **Full physics event payloads** (16-channel ADC array, 256×256 hit matrices, TDC timings, QDC spectra) |
+| **Visual Capabilities** | ❌ Text/Number tables only | ✅ **Interactive 1D Histograms, 2D Heatmaps (4×4 & 256×256), Scatter Plots, and Real-Time Gauges** |
+| **Explorability** | Static flat list of registered metrics | ✅ **Interactive Tree Hierarchy (`Satellite ➔ Channel ➔ Visualizer`)** |
+| **Physics Diagnostics** | ❌ None (only "is process alive?") | ✅ **Online Particle ID (e/π separation in Cherenkov), EM shower profiling (Calorimeter), beam spot centering (Timepix)** |
+| **Transport Layer** | ZeroMQ CMDP (local network only) | **Apache Kafka + WebSockets + Prometheus** |
+| **Access & Portability** | Requires X11 Forwarding from CERN server | ✅ **Modern Web Browser UI (Accessible on Mac/PC/Tablet at `localhost:5050` and `localhost:3000`)** |
+| **Equivalent in LHC** | Basic hardware status monitors | **ATLAS / CMS Online Histogram Presenter (OHP) & DQM Display** |
 
-**Linux**
-1. Install Flatpak as described in [flathub.org/setup](https://flathub.org/setup).
-2. Install Constellation via: `flatpak install flathub de.desy.constellation`
+---
 
-**MacOS**
-1. Update your MacOS installation via `sudo softwareupdate -i -a -R` (important).
-2. Clone the repository: `git clone https://gitlab.desy.de/constellation/constellation`
-3. Follow the build instructions on the [Constellation Documentation](https://constellation.pages.desy.de/application_development/intro/install_from_source.html#c-version) to compile using CMake.
+## 3. Technology Stack & System Architecture
 
-**Windows**
-1. Install WSL as described in the [Microsoft Docs](https://learn.microsoft.com/windows/wsl/install).
-2. Set the WSL networking mode to **Mirrored** in the `.wslconfig` file.
-3. Follow the Linux installation instructions inside the WSL terminal.
-
-**CERN / TDAQ Environment (CVMFS)**
-If you are deploying on real DAQ machines at CERN (e.g., in the BL4S control room), Constellation and its dependencies can be sourced directly from the CernVM File System (CVMFS), eliminating the need to compile from source. This is the standard procedure for actual beamline operations:
-```bash
-# Example of loading the LCG environment and Constellation from CVMFS
-source /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-el9-gcc13-opt/setup.sh
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                   CERN Server (pc-bl4s-07 / Linux)                       │
+│                                                                          │
+│  ┌──────────────────────┐   Constellation CDTP (ZMQ)   ┌──────────────┐  │
+│  │ Geant4ReplaySatellite│ ───────────────────────────▶ │H5DataWriter  │  │
+│  │ ├─ Calorimeter       │                              │  └─ .h5 (EOS)│  │
+│  │ ├─ Scintillator      │                              └──────────────┘  │
+│  │ ├─ Timepix (256x256) │                                                │
+│  │ ├─ Cherenkov (PID)   │   Prometheus Exporter (HTTP) ┌──────────────┐  │
+│  │ └─ TriggerModule     │ ───────────────────────────▶ │ Port :9100   │  │
+│  └──────────┬───────────┘                              └──────┬───────┘  │
+└─────────────┼─────────────────────────────────────────────────┼──────────┘
+              │                                                 │
+              │ Reverse SSH Tunnel (Port 9092)                  │ Forward Tunnel (:9090)
+              ▼                                                 ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                     Local Machine (macOS / Linux)                        │
+│                                                                          │
+│  ┌─────────────────────────┐          ┌───────────────────────────────┐  │
+│  │ Apache Kafka (Docker)   │          │ Prometheus & Grafana (Docker) │  │
+│  │ Topic: bl4s_events      │          │ http://localhost:3000         │  │
+│  └──────────┬──────────────┘          └───────────────────────────────┘  │
+│             │                                                            │
+│             ▼                                                            │
+│  ┌─────────────────────────┐                                             │
+│  │ Flask-SocketIO Server   │                                             │
+│  │ (Python Backend)        │                                             │
+│  └──────────┬──────────────┘                                             │
+│             │ WebSocket Push                                             │
+│             ▼                                                            │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │ BL4S Live Event Explorer (HTML5 / Chart.js / Dark UI)              │  │
+│  │ http://localhost:5050                                              │  │
+│  │ ├── 📂 Calorimeter: 16-ch Energy Histogram & 4x4 Heatmap           │  │
+│  │ ├── 📂 Scintillator: Timing & Photoelectron Distribution           │  │
+│  │ ├── 📂 Timepix: 256x256 Hit Map & ToT Spectrum                     │  │
+│  │ ├── 📂 Cherenkov: QDC Spectrum (Electron / Pion separation)        │  │
+│  │ └── 📂 Trigger: Live Rate Time Series                              │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-> **Network Note:** Ensure your firewall is not blocking ZeroMQ UDP discovery packets. If satellites cannot see each other, try temporarily disabling your local firewall.
+---
 
-### 2.2 Python Environment Setup
-To run the mock detector satellites in this repository, you must set up the Python environment:
+## 4. Installation & Prerequisites
 
-```bash
-# Clone this repository
-git clone https://github.com/KayraYavuz/Constellation-DAQ.git
-cd Constellation-DAQ
+### 4.1 Local Machine Setup (Mac / Linux)
 
-# Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+1. **Docker Containers (Kafka & Monitoring):**
+   ```bash
+   # Start Kafka & Zookeeper
+   docker-compose -f docker-compose-kafka.yml up -d
+   
+   # Start Prometheus & Grafana (if not already running)
+   docker run -d -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+   docker run -d -p 3000:3000 grafana/grafana
+   ```
 
-# Install Constellation Python bindings and dependencies
-pip install "ConstellationDAQ[cli]" h5py matplotlib numpy
-```
+2. **Python Virtual Environment:**
+   ```bash
+   ./setup_venv.sh
+   source kafka_env/bin/activate
+   pip install flask flask-socketio kafka-python matplotlib numpy
+   ```
+
+3. **Establish Secure SSH Tunnels:**
+   ```bash
+   # Reverse tunnel for Kafka (Sends CERN data -> Local Mac)
+   ssh -N -R 9092:localhost:9092 kayra@128.141.131.221
+   
+   # Forward tunnel for Prometheus (Fetches CERN metrics -> Local Grafana)
+   ssh -N -L 9100:localhost:9100 kayra@128.141.131.221
+   ```
 
 ---
 
-## 3. The Detector Suite (Hardware & Simulation)
+## 5. The Detector Suite (Hardware & Simulation)
 
-Constellation is built to interface directly with physical detector hardware on the beamline. Real satellites connect to VME crates, CAEN digitizers, AIDA TLUs, Timepix3 readouts, and other physical NIM modules via C++ or Python interfaces.
-
-However, developing and testing a DAQ without physical beam time requires simulation. This repository provides a highly configurable suite of **Mock Satellites** that mimic real hardware behavior.
-
-> **Note:** Whether you are using real hardware or mock satellites, the Constellation FSM and network protocol remain identical. The specific beam conditions, incident particle energies, and target materials are defined by the physical setup or your offline analysis.
-
-Available Mock Satellites (for Development & Testing):
-* **TriggerModuleSatellite**: Acts as the master clock, generating synchronous trigger events for all other satellites.
-* **MockQDC**: Simulates a multi-channel Charge-to-Digital Converter (analogous to CAEN V965).
-* **MockCalorimeter**: Simulates energy deposition in a grid-based calorimeter structure.
-* **MockTimePix**: Simulates pixel-detector hit matrices for particle tracking.
-* **MockDWC**: Simulates Delay Wire Chambers for beam profiling.
-* **MockScintillator**: Simulates a basic scintillation counter for rate monitoring.
+The simulation reproduces the complete BL4S beamline geometry:
+* **TriggerModuleSatellite**: Software and hardware coincidences generator.
+* **CalorimeterSatellite**: 16-channel Lead Glass Calorimeter measuring electromagnetic showers ($e^-$) vs. MIPs ($\pi$).
+* **ScintillatorSatellite**: Dual-scintillator paddle array ($S_1, S_2$) measuring sub-nanosecond TDC timing and Poisson photoelectron yields.
+* **TimepixSatellite**: $256 \times 256$ pixel matrix outputting sparse clustered hits with Time-over-Threshold (ToT) and Time-of-Arrival (ToA).
+* **CherenkovSatellite**: Threshold gas detector for Particle Identification (PID), distinguishing relativistic electrons from heavier pions.
 
 ---
 
-## 4. Configuration (TOML)
+## 6. Configuration (TOML)
 
-Before transitioning from `NEW` to `INIT`, the DAQ requires a configuration file written in TOML. This file assigns parameters to each satellite based on its class name.
-
-Create a file named `daq_config.toml` in your working directory. Below is a comprehensive example:
+Save the following as `bl4s_config.toml`:
 
 ```toml
-# Trigger Module Configuration
 [TriggerModuleSatellite._default]
-trigger_rate = 100.0  # The global trigger rate in Hz
+trigger_rate = 100.0
 
-# QDC Configuration
-[MockQDC._default]
-channels = 32
-rate = 100.0
-
-# Calorimeter Configuration
-[MockCalorimeter._default]
+[CalorimeterSatellite._default]
 channels = 16
 rate = 100.0
 
-# Data Storage Configuration
+[ScintillatorSatellite._default]
+channels = 2
+rate = 100.0
+
+[TimepixSatellite._default]
+channels = 16
+rate = 100.0
+
+[CherenkovSatellite._default]
+channels = 16
+rate = 100.0
+
 [H5DataWriter._default]
-output_dir = "./data_output"  # Directory where .h5 files will be saved
+output_path = "/eos/user/k/kyavuz/bl4s_data"
 ```
-*The `_default` suffix applies the configuration to any satellite of that class. You can also target specific satellites by their given name.*
 
 ---
 
-## 5. Step-by-Step Operating Tutorial
+## 7. Step-by-Step Operating Tutorial
 
-We will now orchestrate a full DAQ run using **MissionControl**, the central graphical interface for Constellation.
-
-### Step 5.1: Start the Data Writer
-First, ensure you have a directory for your data, and start the `H5DataWriter` satellite to listen for incoming network payloads.
-```bash
-mkdir -p ./data_output
-SatelliteH5DataWriter -g bl4s
-```
-
-### Step 5.2: Launch the Satellites (Mock or Physical)
-Open new terminal tabs, activate your `venv`, and start your detectors (or start your physical C++ satellite binaries):
-```bash
-python3 bl4s_simulation/src/bl4s_satellites/TriggerModuleSatellite.py -g bl4s
-python3 bl4s_simulation/src/bl4s_satellites/MockQDC.py -g bl4s
-python3 bl4s_simulation/src/bl4s_satellites/MockCalorimeter.py -g bl4s
-```
-*Notice we pass `-g bl4s` to assign them all to the `bl4s` network group.*
-
-### Step 5.3: Orchestrating with MissionControl
-1. Open **MissionControl** from your system.
-2. In the connection dialog, enter `bl4s` as the group name and connect.
-3. You will see your satellites listed. Their status will be **NEW**.
-4. **Load Config**: Click the "Load Config" button and select your `daq_config.toml` file.
-5. **INIT**: Click the "Initialize" button. The satellites read their TOML parameters, allocate memory, and transition to **INIT**.
-6. **ORBIT**: Click "Launch". Satellites prepare their network sockets for data transmission and enter **ORBIT**.
-7. **RUN**: Click "Start". The Trigger Module begins emitting triggers. The QDC and Calorimeter generate simulated data, and the H5DataWriter records it to disk. You are now actively taking data!
-8. **STOP**: After acquiring sufficient data, click "Stop". The H5 file is safely closed and flushed to disk.
+1. **Deploy and Start the DAQ Cluster on CERN Server:**
+   ```bash
+   cd /home/kayra/bl4s_simulation
+   ./start_all.sh
+   ```
+2. **Orchestrating in MissionControl:**
+   * Connect to group `bl4s`.
+   * Click **Load Config** (`bl4s_config.toml`).
+   * Click **Initialize** (All satellites turn Green / `INIT`).
+   * Click **Launch** (All satellites turn Light Blue / `ORBIT`).
+   * Click **Start** (All satellites turn Dark Blue / `RUN`).
 
 ---
 
-## 6. Live Monitoring (Observatory & Telemetry)
+## 8. Real-Time Monitoring & Observability Stack
 
-Operating a DAQ blindly is dangerous. Constellation provides powerful introspection tools.
+### 8.1 BL4S Live Event Explorer (Web UI)
+Launch the local web server:
+```bash
+source kafka_env/bin/activate
+python bl4s_event_explorer_server.py
+```
+Open **[http://localhost:5050](http://localhost:5050)** in any browser.
 
-### 6.1 Logging via Observatory
-Observatory aggregates logs from all distributed satellites.
-1. Launch **Observatory** and connect to the `bl4s` group.
-2. In the "Individual Subscriptions" tab, subscribe to the `INFO` and `WARNING` levels.
-3. You will see a live feed of initialization messages, network state changes, and any potential warnings across your entire DAQ cluster.
+**Key Features:**
+* **Folder Tree Explorer**: Expand any satellite to reveal available visualizers.
+* **Interactive Grid Cards**: Click to open/close live histogram panels.
+* **4x4 Calorimeter Heatmap**: Displays spatial energy distribution across crystals.
+* **256x256 Timepix Tracker**: Real-time beam spot and pixel cluster visualization.
+* **Cherenkov PID Spectrum**: Visual electron vs. pion identification peaks.
 
-### 6.2 Metrics via TelemetryConsole
-1. Launch **TelemetryConsole** and connect to `bl4s`.
-2. Select your `TriggerModule` or `MockQDC` as the Sender.
-3. Select `SWTRIG` (Software Triggers) or `RATE` from the metrics dropdown.
-4. Click **Create** to spawn a live, scrolling graph showing your real-time data throughput.
+### 8.2 Grafana Control Room Dashboard
+Import `bl4s_grafana_dashboard.json` into Grafana at **[http://localhost:3000](http://localhost:3000)**.
+* **Slow Controls**: High Voltage (HV), Cryogenic & PMT temperatures.
+* **Data Rates**: Events per second, cumulative recorded data, server CPU load.
+
+### 8.3 Live Kafka Calorimeter Viewer
+For dedicated terminal-based Matplotlib animations:
+```bash
+source kafka_env/bin/activate
+python live_kafka_viewer.py
+```
 
 ---
 
-## 7. Offline Data Analysis (HDF5)
+## 9. Offline Data Analysis (HDF5)
 
-Constellation abandons legacy formats in favor of **HDF5**, a high-performance, parallel data format widely used in modern scientific computing.
+When a run is stopped, Constellation flushes all events into high-performance HDF5 containers (`.h5`).
 
-Once your run is complete, an `.h5` file will reside in your `data_output` directory. 
-
-### Extracting Data with Python
-The `analysis_scripts/` directory contains Python scripts to unpack the binary blobs written by the Constellation C++ core.
-
-To analyze your QDC data:
+Analyze run files locally:
 ```bash
-python3 analysis_scripts/analyze_h5_qdc.py path/to/your/data.h5
+python analyze_h5_calorimeter.py path/to/run.h5
+python analyze_h5_timepix.py path/to/run.h5
+python analyze_h5_qdc.py path/to/run.h5
 ```
-
-### Understanding the HDF5 Structure
-Constellation writes data in structured blocks. Inside the HDF5 file, datasets are named according to the emitting satellite and the block index.
-
-```python
-import h5py
-import struct
-
-filename = "data_output/Constellation_bl4s_..._000000.h5"
-
-with h5py.File(filename, "r") as f:
-    def process_node(name, node):
-        # Look for QDC data payloads
-        if "mockqdc" in name.lower() and "block" in name.lower():
-            raw_bytes = node[:].tobytes()
-            
-            # Unpack the raw bytes into unsigned 16-bit integers (channels)
-            # The exact format string ("<32H") depends on your MockQDC channel count configuration
-            unpacked_channels = struct.unpack("<32H", raw_bytes)
-            
-            print(f"Event Data: {unpacked_channels}")
-            
-    # Iterate through the entire HDF5 hierarchical tree
-    f.visititems(process_node)
-```
-
-From here, the data is just standard NumPy arrays or Python lists, allowing you to easily generate histograms, heatmaps, and perform advanced particle identification (PID) logic.

@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BL4S Live Event Explorer</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-hover: #21262d;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-cyan: #00e5ff;
+            --accent-magenta: #f72585;
+            --accent-green: #39d353;
+            --accent-orange: #f0883e;
+            --accent-purple: #a371f7;
+            --accent-yellow: #e3b341;
+            --glow-cyan: 0 0 20px rgba(0, 229, 255, 0.3);
+            --glow-magenta: 0 0 20px rgba(247, 37, 133, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 300px;
+            min-width: 300px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(0,229,255,0.05), rgba(247,37,133,0.05));
+        }
+
+        .sidebar-header h1 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-header .subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .status-bar {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.disconnected { background: #f85149; animation: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--accent-green); }
+            50% { opacity: 0.5; box-shadow: 0 0 12px var(--accent-green); }
+        }
+
+        .tree-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 0;
+        }
+
+        .tree-container::-webkit-scrollbar { width: 6px; }
+        .tree-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Tree nodes */
+        .tree-root { padding: 0 12px; }
+
+        .tree-sat {
+            margin-bottom: 4px;
+        }
+
+        .tree-sat-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .tree-sat-header:hover { background: var(--bg-hover); }
+
+        .tree-sat-header .icon { font-size: 16px; }
+        .tree-sat-header .chevron {
+            font-size: 10px;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease;
+            margin-left: auto;
+        }
+
+        .tree-sat-header.expanded .chevron { transform: rotate(90deg); }
+
+        .tree-children {
+            display: none;
+            padding-left: 20px;
+        }
+
+        .tree-children.open { display: block; }
+
+        .tree-view-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .tree-view-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .tree-view-item.active {
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--accent-cyan);
+            border-left: 2px solid var(--accent-cyan);
+        }
+
+        .tree-view-item .view-icon { font-size: 14px; }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+        }
+
+        .top-bar .breadcrumb {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .top-bar .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .panels-container {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+            grid-auto-rows: min-content;
+            gap: 16px;
+            align-content: start;
+        }
+
+        .panels-container::-webkit-scrollbar { width: 8px; }
+        .panels-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        /* Empty state */
+        .empty-state {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60vh;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .big-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.3; }
+        .empty-state h2 { font-size: 18px; margin-bottom: 8px; color: var(--text-primary); }
+        .empty-state p { font-size: 13px; }
+
+        /* ===== CHART PANELS ===== */
+        .chart-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            animation: panelIn 0.3s ease;
+        }
+
+        @keyframes panelIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title .live-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 1.5s infinite;
+        }
+
+        .panel-close {
+            width: 28px; height: 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.15s;
+        }
+
+        .panel-close:hover { background: rgba(248,81,73,0.2); color: #f85149; }
+
+        .panel-body {
+            padding: 16px;
+            height: 280px;
+            position: relative;
+        }
+
+        .panel-body canvas { width: 100% !important; height: 100% !important; }
+
+        /* Heatmap canvas */
+        .heatmap-canvas {
+            image-rendering: pixelated;
+            border-radius: 4px;
+        }
+
+        .panel-footer {
+            padding: 8px 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .btn-reset {
+            background: rgba(0,229,255,0.1);
+            border: 1px solid rgba(0,229,255,0.3);
+            color: var(--accent-cyan);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.15s;
+        }
+
+        .btn-reset:hover {
+            background: rgba(0,229,255,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h1>📡 BL4S Event Explorer</h1>
+        <div class="subtitle">Real-time DAQ Observability</div>
+    </div>
+    <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Connecting...</span>
+    </div>
+    <div class="tree-container">
+        <div class="tree-root" id="treeRoot">
+            <!-- Calorimeter -->
+            <div class="tree-sat">
+                <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Calorimeter">
+                    <span class="icon">🔥</span>
+                    <span>CalorimeterSatellite</span>
+                    <span class="chevron">▶</span>
+                </div>
+                <div class="tree-children">
+                    <div class="tree-view-item" onclick="openPanel('calorimeter_energy', 'Calorimeter', '📊 Energy Histogram', 'bar')" data-view="calorimeter_energy">
+                        <span class="view-icon">📊</span> Energy Histogram (16 ch)
+                    </div>
+                    <div class="tree-view-item" onclick="openPanel('calorimeter_heatmap', 'Calorimeter', '🔥 Channel Heatmap 4×4', 'heatmap')" data-view="calorimeter_heatmap">
+                        <span class="view-icon">🔥</span> Channel Heatmap (4×4)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scintillator -->
+            <div class="tree-sat">
+                <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Scintillator">
+                    <span class="icon">💡</span>
+                    <span>ScintillatorSatellite</span>
+                    <span class="chevron">▶</span>
+                </div>
+                <div class="tree-children">
+                    <div class="tree-view-item" onclick="openPanel('scintillator_timing', 'Scintillator', '⏱ Timing Distribution', 'histogram')" data-view="scintillator_timing">
+                        <span class="view-icon">⏱</span> Timing Distribution
+                    </div>
+                    <div class="tree-view-item" onclick="openPanel('scintillator_pe', 'Scintillator', '💡 Photoelectron Count', 'histogram')" data-view="scintillator_pe">
+                        <span class="view-icon">💡</span> Photoelectron Count
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timepix -->
+            <div class="tree-sat">
+                <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Timepix">
+                    <span class="icon">🎯</span>
+                    <span>TimepixSatellite</span>
+                    <span class="chevron">▶</span>
+                </div>
+                <div class="tree-children">
+                    <div class="tree-view-item" onclick="openPanel('timepix_hitmap', 'Timepix', '🎯 Hit Map (256×256)', 'heatmap2d')" data-view="timepix_hitmap">
+                        <span class="view-icon">🎯</span> Hit Map (256×256)
+                    </div>
+                    <div class="tree-view-item" onclick="openPanel('timepix_tot', 'Timepix', '📊 ToT Spectrum', 'histogram')" data-view="timepix_tot">
+                        <span class="view-icon">📊</span> ToT Spectrum
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cherenkov -->
+            <div class="tree-sat">
+                <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Cherenkov">
+                    <span class="icon">🌈</span>
+                    <span>CherenkovSatellite</span>
+                    <span class="chevron">▶</span>
+                </div>
+                <div class="tree-children">
+                    <div class="tree-view-item" onclick="openPanel('cherenkov_qdc', 'Cherenkov', '🌈 QDC Spectrum (e/π PID)', 'histogram')" data-view="cherenkov_qdc">
+                        <span class="view-icon">🌈</span> QDC Spectrum (e/π PID)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trigger -->
+            <div class="tree-sat">
+                <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Trigger">
+                    <span class="icon">⚡</span>
+                    <span>TriggerModule</span>
+                    <span class="chevron">▶</span>
+                </div>
+                <div class="tree-children">
+                    <div class="tree-view-item" onclick="openPanel('trigger_rate', 'Trigger', '⚡ Trigger Rate', 'timeseries')" data-view="trigger_rate">
+                        <span class="view-icon">⚡</span> Trigger Rate
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main-content">
+    <div class="top-bar">
+        <div class="breadcrumb">📡 bl4s / live</div>
+        <div class="stats">
+            <div class="stat-item">
+                <span>Events/s:</span>
+                <span class="stat-value" id="eventsPerSec">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Total:</span>
+                <span class="stat-value" id="totalEvents">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Panels:</span>
+                <span class="stat-value" id="panelCount">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panels-container" id="panelsContainer">
+        <div class="empty-state" id="emptyState">
+            <div class="big-icon">📡</div>
+            <h2>No Active Views</h2>
+            <p>Click on a satellite view in the sidebar to open a live panel</p>
+        </div>
+    </div>
+</main>
+
+<script>
+// ===== STATE =====
+const activePanels = {};
+let totalEventCount = 0;
+let eventCountThisSecond = 0;
+let lastSecondTimestamp = Date.now();
+
+// Data buffers for each view
+const dataBuffers = {
+    calorimeter_energy: new Float64Array(16),
+    calorimeter_heatmap: new Float64Array(16),
+    scintillator_timing: new Float64Array(100),  // 100 bins from 0-20 ns
+    scintillator_pe: new Float64Array(60),       // 60 bins from 0-60 PE
+    timepix_hitmap: null,                        // Will be a 256x256 Uint32Array
+    timepix_tot: new Float64Array(100),          // 100 bins from 0-1000 ToT
+    cherenkov_qdc: new Float64Array(100),        // 100 bins from 0-5000 QDC
+    trigger_rate: [],                            // Time series [{t, v}]
+};
+
+// Initialize Timepix hitmap
+dataBuffers.timepix_hitmap = new Uint32Array(256 * 256);
+
+// ===== SOCKET.IO =====
+const socket = io('http://localhost:5050');
+
+socket.on('connect', () => {
+    document.getElementById('statusDot').className = 'status-dot';
+    document.getElementById('statusText').textContent = 'Connected to Kafka Stream';
+});
+
+socket.on('disconnect', () => {
+    document.getElementById('statusDot').className = 'status-dot disconnected';
+    document.getElementById('statusText').textContent = 'Disconnected';
+});
+
+socket.on('event_batch', (data) => {
+    const { satellite, events } = data;
+    eventCountThisSecond += events.length;
+    totalEventCount += events.length;
+
+    for (const event of events) {
+        routeEvent(event);
+    }
+});
+
+// ===== EVENT ROUTING =====
+function routeEvent(event) {
+    const sat = event.sat;
+
+    if (sat === 'Calorimeter') {
+        const ch = event.ch;
+        if (ch >= 0 && ch < 16) {
+            dataBuffers.calorimeter_energy[ch] += event.energy;
+            dataBuffers.calorimeter_heatmap[ch] += event.energy;
+        }
+    } else if (sat === 'Scintillator') {
+        const timeBin = Math.floor(event.time);
+        if (timeBin >= 0 && timeBin < 100) {
+            dataBuffers.scintillator_timing[timeBin]++;
+        }
+        const peBin = event.n_pe;
+        if (peBin >= 0 && peBin < 60) {
+            dataBuffers.scintillator_pe[peBin]++;
+        }
+    } else if (sat === 'Timepix') {
+        if (event.x >= 0 && event.x < 256 && event.y >= 0 && event.y < 256) {
+            dataBuffers.timepix_hitmap[event.y * 256 + event.x]++;
+            const totBin = Math.floor(event.tot / 10);
+            if (totBin >= 0 && totBin < 100) {
+                dataBuffers.timepix_tot[totBin]++;
+            }
+        }
+    } else if (sat === 'Cherenkov') {
+        const qdcBin = Math.floor(event.qdc / 50);
+        if (qdcBin >= 0 && qdcBin < 100) {
+            dataBuffers.cherenkov_qdc[qdcBin]++;
+        }
+    } else if (sat === 'Trigger') {
+        dataBuffers.trigger_rate.push({ t: Date.now(), v: event.id });
+        // Keep last 200 points
+        if (dataBuffers.trigger_rate.length > 200) {
+            dataBuffers.trigger_rate.shift();
+        }
+    }
+}
+
+// ===== TREE TOGGLING =====
+function toggleSat(header) {
+    header.classList.toggle('expanded');
+    const children = header.nextElementSibling;
+    children.classList.toggle('open');
+}
+
+// ===== PANEL MANAGEMENT =====
+function openPanel(viewId, satellite, title, chartType) {
+    // Toggle: if already open, close it
+    if (activePanels[viewId]) {
+        closePanel(viewId);
+        return;
+    }
+
+    // Mark tree item as active
+    document.querySelectorAll(`.tree-view-item[data-view="${viewId}"]`).forEach(el => el.classList.add('active'));
+
+    // Hide empty state
+    document.getElementById('emptyState').style.display = 'none';
+
+    // Create panel element
+    const panel = document.createElement('div');
+    panel.className = 'chart-panel';
+    panel.id = `panel-${viewId}`;
+    panel.innerHTML = `
+        <div class="panel-header">
+            <div class="panel-title">
+                <div class="live-dot"></div>
+                ${title}
+            </div>
+            <button class="panel-close" onclick="closePanel('${viewId}')" title="Close">✕</button>
+        </div>
+        <div class="panel-body">
+            <canvas id="canvas-${viewId}"></canvas>
+        </div>
+        <div class="panel-footer">
+            <span id="footer-${viewId}">Waiting for data...</span>
+            <button class="btn-reset" onclick="resetBuffer('${viewId}')">Reset</button>
+        </div>
+    `;
+
+    document.getElementById('panelsContainer').appendChild(panel);
+
+    // Create chart
+    const ctx = document.getElementById(`canvas-${viewId}`).getContext('2d');
+    let chart = null;
+
+    if (chartType === 'bar') {
+        chart = createBarChart(ctx, viewId);
+    } else if (chartType === 'histogram') {
+        chart = createHistogramChart(ctx, viewId);
+    } else if (chartType === 'heatmap') {
+        // For heatmap we use direct canvas drawing
+        chart = { type: 'heatmap', canvas: document.getElementById(`canvas-${viewId}`) };
+    } else if (chartType === 'heatmap2d') {
+        chart = { type: 'heatmap2d', canvas: document.getElementById(`canvas-${viewId}`) };
+    } else if (chartType === 'timeseries') {
+        chart = createTimeSeriesChart(ctx, viewId);
+    }
+
+    activePanels[viewId] = { chart, satellite, chartType };
+    updatePanelCount();
+}
+
+function closePanel(viewId) {
+    const panel = document.getElementById(`panel-${viewId}`);
+    if (panel) {
+        panel.style.animation = 'panelIn 0.2s ease reverse';
+        setTimeout(() => {
+            panel.remove();
+            if (activePanels[viewId]?.chart?.destroy) {
+                activePanels[viewId].chart.destroy();
+            }
+            delete activePanels[viewId];
+            updatePanelCount();
+            // Show empty state if no panels
+            if (Object.keys(activePanels).length === 0) {
+                document.getElementById('emptyState').style.display = 'flex';
+            }
+        }, 180);
+    }
+    document.querySelectorAll(`.tree-view-item[data-view="${viewId}"]`).forEach(el => el.classList.remove('active'));
+}
+
+function resetBuffer(viewId) {
+    if (viewId === 'timepix_hitmap') {
+        dataBuffers.timepix_hitmap.fill(0);
+    } else if (dataBuffers[viewId] instanceof Float64Array || dataBuffers[viewId] instanceof Uint32Array) {
+        dataBuffers[viewId].fill(0);
+    } else if (Array.isArray(dataBuffers[viewId])) {
+        dataBuffers[viewId].length = 0;
+    }
+}
+
+function updatePanelCount() {
+    document.getElementById('panelCount').textContent = Object.keys(activePanels).length;
+}
+
+// ===== CHART CREATORS =====
+const chartColors = {
+    calorimeter_energy: { bg: 'rgba(0,229,255,0.6)', border: '#00e5ff' },
+    calorimeter_heatmap: {},
+    scintillator_timing: { bg: 'rgba(57,211,83,0.6)', border: '#39d353' },
+    scintillator_pe: { bg: 'rgba(240,136,62,0.6)', border: '#f0883e' },
+    timepix_tot: { bg: 'rgba(163,113,247,0.6)', border: '#a371f7' },
+    cherenkov_qdc: { bg: 'rgba(247,37,133,0.6)', border: '#f72585' },
+    trigger_rate: { bg: 'rgba(227,179,65,0.3)', border: '#e3b341' },
+};
+
+function createBarChart(ctx, viewId) {
+    const colors = chartColors[viewId] || { bg: 'rgba(0,229,255,0.6)', border: '#00e5ff' };
+    const labels = Array.from({ length: 16 }, (_, i) => `Ch ${i}`);
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Energy (ADC)',
+                data: new Array(16).fill(0),
+                backgroundColor: colors.bg,
+                borderColor: colors.border,
+                borderWidth: 1,
+                borderRadius: 3,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 100 },
+            scales: {
+                x: { ticks: { color: '#8b949e', font: { size: 10, family: 'JetBrains Mono' } }, grid: { color: 'rgba(48,54,61,0.5)' } },
+                y: { ticks: { color: '#8b949e', font: { size: 10, family: 'JetBrains Mono' } }, grid: { color: 'rgba(48,54,61,0.5)' }, beginAtZero: true }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function createHistogramChart(ctx, viewId) {
+    const colors = chartColors[viewId] || { bg: 'rgba(0,229,255,0.6)', border: '#00e5ff' };
+    let binCount, labelFn;
+
+    if (viewId === 'scintillator_timing') {
+        binCount = 30; labelFn = (i) => `${i} ns`;
+    } else if (viewId === 'scintillator_pe') {
+        binCount = 60; labelFn = (i) => `${i}`;
+    } else if (viewId === 'timepix_tot') {
+        binCount = 50; labelFn = (i) => `${i * 10}`;
+    } else if (viewId === 'cherenkov_qdc') {
+        binCount = 100; labelFn = (i) => `${i * 50}`;
+    } else {
+        binCount = 50; labelFn = (i) => `${i}`;
+    }
+
+    const labels = Array.from({ length: binCount }, (_, i) => labelFn(i));
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Counts',
+                data: new Array(binCount).fill(0),
+                backgroundColor: colors.bg,
+                borderColor: colors.border,
+                borderWidth: 1,
+                barPercentage: 1.0,
+                categoryPercentage: 1.0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 100 },
+            scales: {
+                x: {
+                    ticks: { color: '#8b949e', font: { size: 9, family: 'JetBrains Mono' }, maxTicksLimit: 10 },
+                    grid: { display: false }
+                },
+                y: {
+                    ticks: { color: '#8b949e', font: { size: 10, family: 'JetBrains Mono' } },
+                    grid: { color: 'rgba(48,54,61,0.5)' },
+                    beginAtZero: true
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function createTimeSeriesChart(ctx, viewId) {
+    const colors = chartColors[viewId] || { bg: 'rgba(227,179,65,0.3)', border: '#e3b341' };
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Trigger ID',
+                data: [],
+                borderColor: colors.border,
+                backgroundColor: colors.bg,
+                fill: true,
+                pointRadius: 0,
+                borderWidth: 2,
+                tension: 0.3,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 0 },
+            scales: {
+                x: {
+                    ticks: { color: '#8b949e', font: { size: 9, family: 'JetBrains Mono' }, maxTicksLimit: 6 },
+                    grid: { color: 'rgba(48,54,61,0.3)' }
+                },
+                y: {
+                    ticks: { color: '#8b949e', font: { size: 10, family: 'JetBrains Mono' } },
+                    grid: { color: 'rgba(48,54,61,0.5)' },
+                    beginAtZero: true
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+// ===== HEATMAP DRAWING =====
+function drawHeatmap4x4(canvas, data) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.parentElement.clientWidth;
+    const h = canvas.height = canvas.parentElement.clientHeight;
+    const cellW = w / 4;
+    const cellH = h / 4;
+    const maxVal = Math.max(...data, 1);
+
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+            const idx = row * 4 + col;
+            const intensity = data[idx] / maxVal;
+            const r = Math.floor(intensity * 255);
+            const g = Math.floor((1 - intensity) * 50);
+            const b = Math.floor((1 - intensity) * 200 + intensity * 50);
+            ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.fillRect(col * cellW + 1, row * cellH + 1, cellW - 2, cellH - 2);
+
+            // Label
+            ctx.fillStyle = intensity > 0.5 ? '#fff' : '#8b949e';
+            ctx.font = '11px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const label = data[idx] > 1000 ? (data[idx] / 1000).toFixed(1) + 'k' : data[idx].toFixed(0);
+            ctx.fillText(`Ch${idx}`, col * cellW + cellW / 2, row * cellH + cellH / 2 - 8);
+            ctx.font = 'bold 13px JetBrains Mono';
+            ctx.fillText(label, col * cellW + cellW / 2, row * cellH + cellH / 2 + 10);
+        }
+    }
+}
+
+function drawHeatmap256(canvas, data) {
+    const ctx = canvas.getContext('2d');
+    const size = Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+    canvas.width = 256;
+    canvas.height = 256;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    canvas.classList.add('heatmap-canvas');
+
+    const imgData = ctx.createImageData(256, 256);
+    const maxVal = Math.max(...data, 1);
+
+    for (let i = 0; i < 256 * 256; i++) {
+        const intensity = Math.min(data[i] / Math.max(maxVal * 0.5, 1), 1);
+        const idx = i * 4;
+        // Viridis-like colormap
+        imgData.data[idx] = Math.floor(intensity * 200 + (1 - intensity) * 20);     // R
+        imgData.data[idx + 1] = Math.floor(intensity * 50 + (1 - intensity) * 10);   // G
+        imgData.data[idx + 2] = Math.floor((1 - intensity) * 180 + intensity * 30);  // B
+        imgData.data[idx + 3] = data[i] > 0 ? 255 : 40;                              // A
+    }
+    ctx.putImageData(imgData, 0, 0);
+}
+
+// ===== UPDATE LOOP =====
+function updateAllPanels() {
+    for (const [viewId, panelInfo] of Object.entries(activePanels)) {
+        const { chart, chartType } = panelInfo;
+
+        if (chartType === 'bar' && viewId === 'calorimeter_energy') {
+            chart.data.datasets[0].data = Array.from(dataBuffers.calorimeter_energy);
+            chart.update('none');
+            const total = dataBuffers.calorimeter_energy.reduce((a, b) => a + b, 0);
+            updateFooter(viewId, `Total Energy: ${(total/1000).toFixed(1)}k ADC`);
+        }
+        else if (chartType === 'heatmap' && viewId === 'calorimeter_heatmap') {
+            drawHeatmap4x4(chart.canvas, dataBuffers.calorimeter_heatmap);
+            const total = dataBuffers.calorimeter_heatmap.reduce((a, b) => a + b, 0);
+            updateFooter(viewId, `Total: ${(total/1000).toFixed(1)}k`);
+        }
+        else if (chartType === 'histogram' && viewId === 'scintillator_timing') {
+            chart.data.datasets[0].data = Array.from(dataBuffers.scintillator_timing).slice(0, 30);
+            chart.update('none');
+            const total = dataBuffers.scintillator_timing.reduce((a, b) => a + b, 0);
+            updateFooter(viewId, `Entries: ${total.toFixed(0)}`);
+        }
+        else if (chartType === 'histogram' && viewId === 'scintillator_pe') {
+            chart.data.datasets[0].data = Array.from(dataBuffers.scintillator_pe);
+            chart.update('none');
+            const total = dataBuffers.scintillator_pe.reduce((a, b) => a + b, 0);
+            updateFooter(viewId, `Entries: ${total.toFixed(0)}`);
+        }
+        else if (chartType === 'heatmap2d' && viewId === 'timepix_hitmap') {
+            drawHeatmap256(chart.canvas, dataBuffers.timepix_hitmap);
+            const totalHits = dataBuffers.timepix_hitmap.reduce((a, b) => a + b, 0);
+            updateFooter(viewId, `Total Hits: ${totalHits}`);
+        }
+        else if (chartType === 'histogram' && viewId === 'timepix_tot') {
+            chart.data.datasets[0].data = Array.from(dataBuffers.timepix_tot).slice(0, 50);
+            chart.update('none');
+            const total = dataBuffers.timepix_tot.reduce((a, b) => a + b, 0);
+            updateFooter(viewId, `Entries: ${total.toFixed(0)}`);
+        }
+        else if (chartType === 'histogram' && viewId === 'cherenkov_qdc') {
+            chart.data.datasets[0].data = Array.from(dataBuffers.cherenkov_qdc);
+            chart.update('none');
+            const total = dataBuffers.cherenkov_qdc.reduce((a, b) => a + b, 0);
+            updateFooter(viewId, `Entries: ${total.toFixed(0)}`);
+        }
+        else if (chartType === 'timeseries' && viewId === 'trigger_rate') {
+            const points = dataBuffers.trigger_rate;
+            chart.data.labels = points.map(p => new Date(p.t).toLocaleTimeString());
+            chart.data.datasets[0].data = points.map(p => p.v);
+            chart.update('none');
+            const last = points.length > 0 ? points[points.length - 1].v : 0;
+            updateFooter(viewId, `Last Trigger ID: ${last}`);
+        }
+    }
+
+    // Update global stats
+    const now = Date.now();
+    if (now - lastSecondTimestamp >= 1000) {
+        document.getElementById('eventsPerSec').textContent = eventCountThisSecond.toLocaleString();
+        eventCountThisSecond = 0;
+        lastSecondTimestamp = now;
+    }
+    document.getElementById('totalEvents').textContent = totalEventCount.toLocaleString();
+}
+
+function updateFooter(viewId, text) {
+    const el = document.getElementById(`footer-${viewId}`);
+    if (el) el.textContent = text;
+}
+
+// Update at 10 FPS
+setInterval(updateAllPanels, 100);
+</script>
+
+</body>
+</html>
