@@ -10,6 +10,11 @@ This repository provides:
 
 ---
 
+### 🟢 New to the Project?
+If you have never used Constellation, Kafka, Grafana, or Particle Physics simulations before, please start with our **[Beginner's Step-by-Step Guide](bl4s_beginner_guide.md)**!
+
+---
+
 ## Table of Contents
 1. [What is Constellation?](#1-what-is-constellation)
 2. [Observability vs. Telemetry: Architecture Comparison](#2-observability-vs-telemetry-architecture-comparison)
