@@ -5,8 +5,8 @@ Welcome to the comprehensive guide for operating the Constellation Data Acquisit
 This repository provides:
 1. **Core Constellation DAQ & Mock Detector Suite**: Complete framework setup, FSM orchestration, and Geant4/Allpix² physics replays.
 2. **Prometheus & Grafana Telemetry**: Slow-control telemetry dashboard for real-time detector health, high voltage, temperatures, and throughput.
-3. **Kafka Real-Time Streaming Pipeline**: Zero-latency distributed event streaming directly from detector frontends.
-4. **BL4S Live Event Explorer (Observability UI)**: Web-based control room interface featuring a hierarchical tree explorer and interactive Chart.js histograms, heatmaps, and PID spectra (similar to ATLAS/CMS TDAQ OHP).
+3. **Kafka Real-Time Streaming Pipeline (Google Protocol Buffers)**: Zero-latency, highly compressed binary event streaming (`.proto`) directly from detector frontends.
+4. **BL4S Live Event Explorer (Observability UI)**: Web-based control room interface featuring a hierarchical tree explorer and high-performance **Apache ECharts** histograms, 2D heatmaps, and PID spectra (similar to ATLAS/CMS TDAQ OHP).
 
 ---
 
@@ -98,7 +98,7 @@ Constellation comes out of the box with standard tools (**MissionControl**, **Ob
 │             │ WebSocket Push                                             │
 │             ▼                                                            │
 │  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │ BL4S Live Event Explorer (HTML5 / Chart.js / Dark UI)              │  │
+│  │ BL4S Live Event Explorer (HTML5 / Apache ECharts / Dark UI)           │  │
 │  │ http://localhost:5050                                              │  │
 │  │ ├── 📂 Calorimeter: 16-ch Energy Histogram & 4x4 Heatmap           │  │
 │  │ ├── 📂 Scintillator: Timing & Photoelectron Distribution           │  │

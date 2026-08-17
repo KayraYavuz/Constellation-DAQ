@@ -9,21 +9,19 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0d1117;
-            --bg-secondary: #161b22;
-            --bg-card: #1c2333;
-            --bg-hover: #21262d;
-            --border: #30363d;
-            --text-primary: #e6edf3;
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-card: #252526;
+            --bg-hover: #2a2d2e;
+            --border: #333333;
+            --text-primary: #e1e4e8;
             --text-secondary: #8b949e;
-            --accent-cyan: #00e5ff;
-            --accent-magenta: #f72585;
-            --accent-green: #39d353;
-            --accent-orange: #f0883e;
-            --accent-purple: #a371f7;
-            --accent-yellow: #e3b341;
-            --glow-cyan: 0 0 20px rgba(0, 229, 255, 0.3);
-            --glow-magenta: 0 0 20px rgba(247, 37, 133, 0.3);
+            --accent-cyan: #3b82f6; /* Blue */
+            --accent-magenta: #ef4444; /* Red */
+            --accent-green: #10b981; /* Emerald */
+            --accent-orange: #f59e0b; /* Amber */
+            --accent-purple: #8b5cf6; /* Purple */
+            --accent-yellow: #eab308; /* Yellow */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -51,7 +49,7 @@
         .sidebar-header {
             padding: 20px;
             border-bottom: 1px solid var(--border);
-            background: linear-gradient(135deg, rgba(0,229,255,0.05), rgba(247,37,133,0.05));
+            background: var(--bg-secondary);
         }
 
         .sidebar-header h1 {
@@ -83,15 +81,12 @@
             width: 8px; height: 8px;
             border-radius: 50%;
             background: var(--accent-green);
-            animation: pulse 2s infinite;
+            
         }
 
         .status-dot.disconnected { background: #f85149; animation: none; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--accent-green); }
-            50% { opacity: 0.5; box-shadow: 0 0 12px var(--accent-green); }
-        }
+
 
         .tree-container {
             flex: 1;
@@ -158,7 +153,7 @@
         }
 
         .tree-view-item.active {
-            background: rgba(0, 229, 255, 0.1);
+            background: rgba(59, 130, 246, 0.1);
             color: var(--accent-cyan);
             border-left: 2px solid var(--accent-cyan);
         }
@@ -270,7 +265,7 @@
             width: 6px; height: 6px;
             border-radius: 50%;
             background: var(--accent-green);
-            animation: pulse 1.5s infinite;
+            
         }
 
         .panel-close {
@@ -314,8 +309,8 @@
         }
 
         .btn-reset {
-            background: rgba(0,229,255,0.1);
-            border: 1px solid rgba(0,229,255,0.3);
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
             color: var(--accent-cyan);
             padding: 3px 10px;
             border-radius: 4px;
@@ -326,7 +321,7 @@
         }
 
         .btn-reset:hover {
-            background: rgba(0,229,255,0.2);
+            background: rgba(59, 130, 246, 0.2);
         }
     </style>
 </head>
@@ -335,7 +330,7 @@
 <!-- ===== SIDEBAR ===== -->
 <aside class="sidebar">
     <div class="sidebar-header">
-        <h1>📡 BL4S Event Explorer</h1>
+        <h1> BL4S Event Explorer</h1>
         <div class="subtitle">Real-time DAQ Observability</div>
     </div>
     <div class="status-bar">
@@ -347,16 +342,16 @@
             <!-- Calorimeter -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Calorimeter">
-                    <span class="icon">🔥</span>
+                    <span class="icon"></span>
                     <span>CalorimeterSatellite</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('calorimeter_energy', 'Calorimeter', '📊 Energy Histogram', 'bar')" data-view="calorimeter_energy">
-                        <span class="view-icon">📊</span> Energy Histogram (16 ch)
+                    <div class="tree-view-item" onclick="openPanel('calorimeter_energy', 'Calorimeter', ' Energy Histogram', 'bar')" data-view="calorimeter_energy">
+                        <span class="view-icon"></span> Energy Histogram (16 ch)
                     </div>
-                    <div class="tree-view-item" onclick="openPanel('calorimeter_heatmap', 'Calorimeter', '🔥 Channel Heatmap 4×4', 'heatmap')" data-view="calorimeter_heatmap">
-                        <span class="view-icon">🔥</span> Channel Heatmap (4×4)
+                    <div class="tree-view-item" onclick="openPanel('calorimeter_heatmap', 'Calorimeter', ' Channel Heatmap 4×4', 'heatmap')" data-view="calorimeter_heatmap">
+                        <span class="view-icon"></span> Channel Heatmap (4×4)
                     </div>
                 </div>
             </div>
@@ -364,16 +359,16 @@
             <!-- Scintillator -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Scintillator">
-                    <span class="icon">💡</span>
+                    <span class="icon"></span>
                     <span>ScintillatorSatellite</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('scintillator_timing', 'Scintillator', '⏱ Timing Distribution', 'histogram')" data-view="scintillator_timing">
-                        <span class="view-icon">⏱</span> Timing Distribution
+                    <div class="tree-view-item" onclick="openPanel('scintillator_timing', 'Scintillator', ' Timing Distribution', 'histogram')" data-view="scintillator_timing">
+                        <span class="view-icon"></span> Timing Distribution
                     </div>
-                    <div class="tree-view-item" onclick="openPanel('scintillator_pe', 'Scintillator', '💡 Photoelectron Count', 'histogram')" data-view="scintillator_pe">
-                        <span class="view-icon">💡</span> Photoelectron Count
+                    <div class="tree-view-item" onclick="openPanel('scintillator_pe', 'Scintillator', ' Photoelectron Count', 'histogram')" data-view="scintillator_pe">
+                        <span class="view-icon"></span> Photoelectron Count
                     </div>
                 </div>
             </div>
@@ -381,16 +376,16 @@
             <!-- Timepix -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Timepix">
-                    <span class="icon">🎯</span>
+                    <span class="icon"></span>
                     <span>TimepixSatellite</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('timepix_hitmap', 'Timepix', '🎯 Hit Map (256×256)', 'heatmap2d')" data-view="timepix_hitmap">
-                        <span class="view-icon">🎯</span> Hit Map (256×256)
+                    <div class="tree-view-item" onclick="openPanel('timepix_hitmap', 'Timepix', ' Hit Map (256×256)', 'heatmap2d')" data-view="timepix_hitmap">
+                        <span class="view-icon"></span> Hit Map (256×256)
                     </div>
-                    <div class="tree-view-item" onclick="openPanel('timepix_tot', 'Timepix', '📊 ToT Spectrum', 'histogram')" data-view="timepix_tot">
-                        <span class="view-icon">📊</span> ToT Spectrum
+                    <div class="tree-view-item" onclick="openPanel('timepix_tot', 'Timepix', ' ToT Spectrum', 'histogram')" data-view="timepix_tot">
+                        <span class="view-icon"></span> ToT Spectrum
                     </div>
                 </div>
             </div>
@@ -398,13 +393,13 @@
             <!-- Cherenkov -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Cherenkov">
-                    <span class="icon">🌈</span>
+                    <span class="icon"></span>
                     <span>CherenkovSatellite</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('cherenkov_qdc', 'Cherenkov', '🌈 QDC Spectrum (e/π PID)', 'histogram')" data-view="cherenkov_qdc">
-                        <span class="view-icon">🌈</span> QDC Spectrum (e/π PID)
+                    <div class="tree-view-item" onclick="openPanel('cherenkov_qdc', 'Cherenkov', ' QDC Spectrum (e/π PID)', 'histogram')" data-view="cherenkov_qdc">
+                        <span class="view-icon"></span> QDC Spectrum (e/π PID)
                     </div>
                 </div>
             </div>
@@ -412,13 +407,13 @@
             <!-- Trigger -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Trigger">
-                    <span class="icon">⚡</span>
+                    <span class="icon"></span>
                     <span>TriggerModule</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('trigger_rate', 'Trigger', '⚡ Trigger Rate', 'timeseries')" data-view="trigger_rate">
-                        <span class="view-icon">⚡</span> Trigger Rate
+                    <div class="tree-view-item" onclick="openPanel('trigger_rate', 'Trigger', ' Trigger Rate', 'timeseries')" data-view="trigger_rate">
+                        <span class="view-icon"></span> Trigger Rate
                     </div>
                 </div>
             </div>
@@ -429,7 +424,7 @@
 <!-- ===== MAIN CONTENT ===== -->
 <main class="main-content">
     <div class="top-bar">
-        <div class="breadcrumb">📡 bl4s / live</div>
+        <div class="breadcrumb"> bl4s / live</div>
         <div class="stats">
             <div class="stat-item">
                 <span>Events/s:</span>
@@ -448,7 +443,7 @@
 
     <div class="panels-container" id="panelsContainer">
         <div class="empty-state" id="emptyState">
-            <div class="big-icon">📡</div>
+            <div class="big-icon"></div>
             <h2>No Active Views</h2>
             <p>Click on a satellite view in the sidebar to open a live panel</p>
         </div>
@@ -566,6 +561,11 @@ function openPanel(viewId, satellite, title, chartType) {
     const panel = document.createElement('div');
     panel.className = 'chart-panel';
     panel.id = `panel-${viewId}`;
+    
+    const bodyContent = (chartType === 'heatmap2d') 
+        ? `<canvas id="canvas-${viewId}"></canvas>` 
+        : `<div id="chart-${viewId}" style="width: 100%; height: 100%;"></div>`;
+
     panel.innerHTML = `
         <div class="panel-header">
             <div class="panel-title">
@@ -575,7 +575,7 @@ function openPanel(viewId, satellite, title, chartType) {
             <button class="panel-close" onclick="closePanel('${viewId}')" title="Close">✕</button>
         </div>
         <div class="panel-body">
-            <canvas id="canvas-${viewId}"></canvas>
+            ${bodyContent}
         </div>
         <div class="panel-footer">
             <span id="footer-${viewId}">Waiting for data...</span>
@@ -586,20 +586,22 @@ function openPanel(viewId, satellite, title, chartType) {
     document.getElementById('panelsContainer').appendChild(panel);
 
     // Create chart
-    const ctx = document.getElementById(`canvas-${viewId}`).getContext('2d');
     let chart = null;
 
-    if (chartType === 'bar') {
-        chart = createBarChart(ctx, viewId);
-    } else if (chartType === 'histogram') {
-        chart = createHistogramChart(ctx, viewId);
-    } else if (chartType === 'heatmap') {
-        // For heatmap we use direct canvas drawing
-        chart = { type: 'heatmap', canvas: document.getElementById(`canvas-${viewId}`) };
-    } else if (chartType === 'heatmap2d') {
+    if (chartType === 'heatmap2d') {
         chart = { type: 'heatmap2d', canvas: document.getElementById(`canvas-${viewId}`) };
-    } else if (chartType === 'timeseries') {
-        chart = createTimeSeriesChart(ctx, viewId);
+    } else {
+        const dom = document.getElementById(`chart-${viewId}`);
+        chart = echarts.init(dom);
+        if (chartType === 'bar') {
+            createBarChart(chart, viewId);
+        } else if (chartType === 'histogram') {
+            createHistogramChart(chart, viewId);
+        } else if (chartType === 'heatmap') {
+            createHeatmap4x4(chart, viewId);
+        } else if (chartType === 'timeseries') {
+            createTimeSeriesChart(chart, viewId);
+        }
     }
 
     activePanels[viewId] = { chart, satellite, chartType };
@@ -612,8 +614,8 @@ function closePanel(viewId) {
         panel.style.animation = 'panelIn 0.2s ease reverse';
         setTimeout(() => {
             panel.remove();
-            if (activePanels[viewId]?.chart?.destroy) {
-                activePanels[viewId].chart.destroy();
+            if (activePanels[viewId]?.chart && typeof activePanels[viewId].chart.dispose === 'function') {
+                activePanels[viewId].chart.dispose();
             }
             delete activePanels[viewId];
             updatePanelCount();
@@ -765,7 +767,7 @@ function createHeatmap4x4(chart, viewId) {
             left: 'center',
             bottom: '0%',
             show: false,
-            inRange: { color: ['#161b22', '#2c003e', '#f72585', '#00e5ff', '#ffffff'] }
+            inRange: { color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026'] } /* Standard RdYlBu */
         },
         series: [{
             name: 'Energy',
@@ -781,7 +783,8 @@ function createHeatmap4x4(chart, viewId) {
 
 // ===== HEATMAP DRAWING =====
 
-// ECharts heatmap handles 4x4 now.\nfunction drawHeatmap256(canvas, data) {
+// ECharts heatmap handles 4x4 now.
+function drawHeatmap256(canvas, data) {
     const ctx = canvas.getContext('2d');
     const size = Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
     canvas.width = 256;
@@ -893,7 +896,8 @@ window.addEventListener('resize', () => {
         }
     }
 });
-\nsetInterval(updateAllPanels, 100);
+
+setInterval(updateAllPanels, 100);
 </script>
 
 </body>

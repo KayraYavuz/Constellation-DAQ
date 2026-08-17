@@ -6,7 +6,7 @@ Bridges Kafka events to a browser via Socket.IO for real-time observability.
 import json
 import threading
 import time
-from flask import Flask, send_file, send_from_directory
+from flask import Flask, send_file, send_from_directory, request as flask_request
 from flask_socketio import SocketIO, emit
 from kafka import KafkaConsumer
 
@@ -114,12 +114,6 @@ def kafka_consumer_thread():
             time.sleep(3)
 
 if __name__ == '__main__':
-    from flask import request as flask_request
-    
-    # Monkey-patch flask_request into handlers
-    import flask
-    globals()['flask_request'] = flask.request
-    
     # Start Kafka consumer in background thread
     kafka_thread = threading.Thread(target=kafka_consumer_thread, daemon=True)
     kafka_thread.start()
