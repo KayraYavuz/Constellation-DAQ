@@ -26,11 +26,11 @@ class TriggerModuleSatellite(Satellite):
             from kafka import KafkaProducer
             self._kafka_producer = KafkaProducer(
                 bootstrap_servers=['localhost:9092'],
-                value_serializer=lambda x: json.dumps(x).encode('utf-8'),
+                value_serializer=lambda x: x.SerializeToString(),
                 request_timeout_ms=1000,
                 max_block_ms=500
             )
-            self.log.info("Trigger Kafka live streaming ENABLED on localhost:9092")
+            self.log.info("Trigger Kafka live streaming ENABLED on localhost:9092 (Protobuf)")
         except Exception as e:
             self.log.warning(f"Kafka not available ({e}). Running without live streaming.")
 
@@ -44,6 +44,7 @@ class TriggerModuleSatellite(Satellite):
         return random.random() < 0.000001
 
     def do_run(self) -> str:
+        import bl4s_events_pb2
         while not self.stop_requested():
             if self.poll_register():
                 self.trigger_id += 1
@@ -54,11 +55,11 @@ class TriggerModuleSatellite(Satellite):
             now = time.time()
             if self._kafka_producer and (now - self._last_kafka_time) >= 0.5:
                 try:
-                    self._kafka_producer.send(self._kafka_topic, value={
-                        "sat": "Trigger",
-                        "id": self.trigger_id,
-                        "timestamp": now
-                    })
+                    event = bl4s_events_pb2.BL4SEvent(sat="Trigger")
+                    event.trigger.id = self.trigger_id
+                    event.trigger.timestamp = now
+                    self._kafka_producer.send(self._kafka_topic, value=event)
+                    self._last_kafka_time = now
                 except Exception:
                     pass
                 self._last_kafka_time = now

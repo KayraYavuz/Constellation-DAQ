@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package bl4s;
+
+message CalorimeterEvent {
+    int32 ch = 1;
+    float energy = 2;
+    int32 n_hits = 3;
+    float time = 4;
+}
+
+message ScintillatorEvent {
+    int32 ch = 1;
+    int32 n_pe = 2;
+    float time = 3;
+}
+
+message TimepixEvent {
+    int32 x = 1;
+    int32 y = 2;
+    float tot = 3;
+    float toa = 4;
+}
+
+message CherenkovEvent {
+    float qdc = 1;
+}
+
+message TriggerEvent {
+    int32 id = 1;
+    float timestamp = 2;
+}
+
+message BL4SEvent {
+    string sat = 1;
+    oneof event_data {
+        CalorimeterEvent calorimeter = 2;
+        ScintillatorEvent scintillator = 3;
+        TimepixEvent timepix = 4;
+        CherenkovEvent cherenkov = 5;
+        TriggerEvent trigger = 6;
+    }
+}

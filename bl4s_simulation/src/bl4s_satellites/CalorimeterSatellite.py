@@ -35,21 +35,23 @@ class CalorimeterSatellite(Geant4ReplaySatellite):
             
         return bytes(payload)
 
-    def decode_event_for_kafka(self, raw_bytes: bytes) -> list[dict]:
+    def decode_event_for_kafka(self, raw_bytes: bytes) -> list:
         """Decode calorimeter data into per-channel energy readings."""
+        import bl4s_events_pb2
         events = []
         ch_size = 8
         num_channels = len(raw_bytes) // ch_size
         for ch in range(num_channels):
             chunk = raw_bytes[ch * ch_size : (ch + 1) * ch_size]
             amp, n_hits, time_val = struct.unpack('<H B x f', chunk)
-            events.append({
-                "sat": "Calorimeter",
-                "ch": ch,
-                "energy": float(amp),
-                "n_hits": int(n_hits),
-                "time": float(time_val)
-            })
+            
+            event = bl4s_events_pb2.BL4SEvent(sat="Calorimeter")
+            event.calorimeter.ch = ch
+            event.calorimeter.energy = float(amp)
+            event.calorimeter.n_hits = int(n_hits)
+            event.calorimeter.time = float(time_val)
+            events.append(event)
+            
         return events
 
 def main(args=None):

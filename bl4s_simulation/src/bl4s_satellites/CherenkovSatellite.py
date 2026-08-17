@@ -23,12 +23,16 @@ class CherenkovSatellite(Geant4ReplaySatellite):
         hit_data = struct.pack('<H', np.clip(qdc_val, 0, 65535))
         return hit_data
 
-    def decode_event_for_kafka(self, raw_bytes: bytes) -> list[dict]:
+    def decode_event_for_kafka(self, raw_bytes: bytes) -> list:
         """Decode Cherenkov QDC value for live PID spectrum."""
+        import bl4s_events_pb2
+        event = bl4s_events_pb2.BL4SEvent(sat="Cherenkov")
         if len(raw_bytes) >= 2:
             qdc_val = struct.unpack('<H', raw_bytes[:2])[0]
-            return [{"sat": "Cherenkov", "qdc": int(qdc_val)}]
-        return [{"sat": "Cherenkov", "qdc": 0}]
+            event.cherenkov.qdc = float(qdc_val)
+        else:
+            event.cherenkov.qdc = 0.0
+        return [event]
 
 def main(args=None):
     from constellation.core.satellite import SatelliteArgumentParser

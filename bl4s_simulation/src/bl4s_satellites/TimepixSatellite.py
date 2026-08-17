@@ -41,24 +41,27 @@ class TimepixSatellite(Geant4ReplaySatellite):
                 
         return bytes(payload)
 
-    def decode_event_for_kafka(self, raw_bytes: bytes) -> list[dict]:
+    def decode_event_for_kafka(self, raw_bytes: bytes) -> list:
         """Decode Timepix data into per-hit pixel readings."""
+        import bl4s_events_pb2
         events = []
         hit_size = 16
         num_hits = len(raw_bytes) // hit_size
         for i in range(num_hits):
             chunk = raw_bytes[i * hit_size : (i + 1) * hit_size]
             x, y, ftoa, tot, toa_low, toa_high = struct.unpack('<B B B x H x x I I', chunk)
-            events.append({
-                "sat": "Timepix",
-                "x": int(x),
-                "y": int(y),
-                "tot": int(tot),
-                "toa": int(toa_low)
-            })
+            
+            event = bl4s_events_pb2.BL4SEvent(sat="Timepix")
+            event.timepix.x = int(x)
+            event.timepix.y = int(y)
+            event.timepix.tot = float(tot)
+            event.timepix.toa = float(toa_low)
+            events.append(event)
+            
         # If no hits, send an empty marker so the UI knows it's alive
         if not events:
-            events.append({"sat": "Timepix", "x": -1, "y": -1, "tot": 0, "toa": 0})
+            empty_event = bl4s_events_pb2.BL4SEvent(sat="Timepix")
+            events.append(empty_event)
         return events
 
 def main(args=None):

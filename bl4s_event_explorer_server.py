@@ -62,10 +62,12 @@ def kafka_consumer_thread():
                 bootstrap_servers=[KAFKA_BROKER],
                 auto_offset_reset='latest',
                 enable_auto_commit=True,
-                value_deserializer=lambda x: json.loads(x.decode('utf-8')),
+                value_deserializer=lambda x: x,
                 consumer_timeout_ms=1000
             )
-            print("[Kafka] Connected! Consuming events...")
+            print("[Kafka] Connected! Consuming Protobuf events...")
+            
+            import bl4s_events_pb2
             
             # Buffer events and emit in batches for performance
             buffer = {}  # {satellite_name: [events]}
@@ -76,7 +78,20 @@ def kafka_consumer_thread():
                 records = consumer.poll(timeout_ms=50)
                 for tp, messages in records.items():
                     for message in messages:
-                        event = message.value
+                        pb_event = bl4s_events_pb2.BL4SEvent()
+                        try:
+                            pb_event.ParseFromString(message.value)
+                        except Exception as e:
+                            continue
+                            
+                        # Flatten the protobuf to a standard dict for the frontend
+                        event = {"sat": pb_event.sat}
+                        field = pb_event.WhichOneof("event_data")
+                        if field:
+                            sub_msg = getattr(pb_event, field)
+                            for descriptor in sub_msg.DESCRIPTOR.fields:
+                                event[descriptor.name] = getattr(sub_msg, descriptor.name)
+                                
                         sat_name = event.get('sat', 'Unknown')
                         if sat_name not in buffer:
                             buffer[sat_name] = []

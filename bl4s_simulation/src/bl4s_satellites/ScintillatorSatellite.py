@@ -30,20 +30,22 @@ class ScintillatorSatellite(Geant4ReplaySatellite):
             
         return bytes(payload)
 
-    def decode_event_for_kafka(self, raw_bytes: bytes) -> list[dict]:
+    def decode_event_for_kafka(self, raw_bytes: bytes) -> list:
         """Decode scintillator data into per-channel timing and PE readings."""
+        import bl4s_events_pb2
         events = []
         ch_size = 8
         num_channels = len(raw_bytes) // ch_size
         for i in range(num_channels):
             chunk = raw_bytes[i * ch_size : (i + 1) * ch_size]
             ch_id, n_pe, time_val = struct.unpack('<H B x f', chunk)
-            events.append({
-                "sat": "Scintillator",
-                "ch": int(ch_id),
-                "n_pe": int(n_pe),
-                "time": float(time_val)
-            })
+            
+            event = bl4s_events_pb2.BL4SEvent(sat="Scintillator")
+            event.scintillator.ch = int(ch_id)
+            event.scintillator.n_pe = int(n_pe)
+            event.scintillator.time = float(time_val)
+            events.append(event)
+            
         return events
 
 def main(args=None):

@@ -34,13 +34,13 @@ class Geant4ReplaySatellite(TransmitterSatellite):
             from kafka import KafkaProducer
             self._kafka_producer = KafkaProducer(
                 bootstrap_servers=['localhost:9092'],
-                value_serializer=lambda x: json.dumps(x).encode('utf-8'),
+                value_serializer=lambda x: x.SerializeToString(),
                 request_timeout_ms=1000,
                 max_block_ms=500,
                 linger_ms=5,
                 batch_size=16384
             )
-            self.log.info("Kafka live streaming ENABLED on localhost:9092")
+            self.log.info("Kafka live streaming ENABLED on localhost:9092 (Protobuf)")
         except Exception as e:
             self.log.warning(f"Kafka not available ({e}). Running without live streaming.")
         
@@ -53,15 +53,14 @@ class Geant4ReplaySatellite(TransmitterSatellite):
         """
         raise NotImplementedError("Subclasses must implement generate_physics_event")
 
-    def decode_event_for_kafka(self, raw_bytes: bytes) -> list[dict]:
+    def decode_event_for_kafka(self, raw_bytes: bytes) -> list:
         """
-        Subclasses should override this to return a list of dicts
-        representing the decoded event for Kafka streaming.
-        Default: sends the raw byte length as a simple metric.
+        Subclasses should override this to return a list of Protobuf BL4SEvent
+        messages representing the decoded event for Kafka streaming.
         """
-        return [{"sat": self.__class__.__name__, "raw_len": len(raw_bytes)}]
+        return []
 
-    def _send_to_kafka(self, events: list[dict]):
+    def _send_to_kafka(self, events: list):
         """Send decoded events to Kafka, silently ignoring errors."""
         if self._kafka_producer is None:
             return

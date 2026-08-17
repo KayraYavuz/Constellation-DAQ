@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BL4S Live Event Explorer</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -651,36 +651,35 @@ const chartColors = {
     trigger_rate: { bg: 'rgba(227,179,65,0.3)', border: '#e3b341' },
 };
 
-function createBarChart(ctx, viewId) {
+
+function createBarChart(chart, viewId) {
     const colors = chartColors[viewId] || { bg: 'rgba(0,229,255,0.6)', border: '#00e5ff' };
     const labels = Array.from({ length: 16 }, (_, i) => `Ch ${i}`);
-    return new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Energy (ADC)',
-                data: new Array(16).fill(0),
-                backgroundColor: colors.bg,
-                borderColor: colors.border,
-                borderWidth: 1,
-                borderRadius: 3,
-            }]
+    
+    const option = {
+        backgroundColor: 'transparent',
+        grid: { top: 10, right: 10, bottom: 20, left: 40 },
+        xAxis: { 
+            type: 'category', 
+            data: labels,
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 10 }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 100 },
-            scales: {
-                x: { ticks: { color: '#8b949e', font: { size: 10, family: 'JetBrains Mono' } }, grid: { color: 'rgba(48,54,61,0.5)' } },
-                y: { ticks: { color: '#8b949e', font: { size: 10, family: 'JetBrains Mono' } }, grid: { color: 'rgba(48,54,61,0.5)' }, beginAtZero: true }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
+        yAxis: { 
+            type: 'value',
+            splitLine: { lineStyle: { color: 'rgba(48,54,61,0.5)' } },
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 10 }
+        },
+        series: [{
+            data: new Array(16).fill(0),
+            type: 'bar',
+            itemStyle: { color: colors.border, borderRadius: [3, 3, 0, 0] },
+            animationDurationUpdate: 100
+        }]
+    };
+    chart.setOption(option);
 }
 
-function createHistogramChart(ctx, viewId) {
+function createHistogramChart(chart, viewId) {
     const colors = chartColors[viewId] || { bg: 'rgba(0,229,255,0.6)', border: '#00e5ff' };
     let binCount, labelFn;
 
@@ -697,110 +696,92 @@ function createHistogramChart(ctx, viewId) {
     }
 
     const labels = Array.from({ length: binCount }, (_, i) => labelFn(i));
-    return new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Counts',
-                data: new Array(binCount).fill(0),
-                backgroundColor: colors.bg,
-                borderColor: colors.border,
-                borderWidth: 1,
-                barPercentage: 1.0,
-                categoryPercentage: 1.0,
-            }]
+    
+    const option = {
+        backgroundColor: 'transparent',
+        grid: { top: 10, right: 10, bottom: 20, left: 40 },
+        xAxis: { 
+            type: 'category', 
+            data: labels,
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 9 }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 100 },
-            scales: {
-                x: {
-                    ticks: { color: '#8b949e', font: { size: 9, family: 'JetBrains Mono' }, maxTicksLimit: 10 },
-                    grid: { display: false }
-                },
-                y: {
-                    ticks: { color: '#8b949e', font: { size: 10, family: 'JetBrains Mono' } },
-                    grid: { color: 'rgba(48,54,61,0.5)' },
-                    beginAtZero: true
-                }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
+        yAxis: { 
+            type: 'value',
+            splitLine: { lineStyle: { color: 'rgba(48,54,61,0.5)' } },
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 10 }
+        },
+        series: [{
+            data: new Array(binCount).fill(0),
+            type: 'bar',
+            barWidth: '100%',
+            itemStyle: { color: colors.border },
+            animationDurationUpdate: 100
+        }]
+    };
+    chart.setOption(option);
 }
 
-function createTimeSeriesChart(ctx, viewId) {
+function createTimeSeriesChart(chart, viewId) {
     const colors = chartColors[viewId] || { bg: 'rgba(227,179,65,0.3)', border: '#e3b341' };
-    return new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Trigger ID',
-                data: [],
-                borderColor: colors.border,
-                backgroundColor: colors.bg,
-                fill: true,
-                pointRadius: 0,
-                borderWidth: 2,
-                tension: 0.3,
-            }]
+    
+    const option = {
+        backgroundColor: 'transparent',
+        grid: { top: 10, right: 10, bottom: 20, left: 40 },
+        xAxis: { 
+            type: 'category', 
+            data: [],
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 9 }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 0 },
-            scales: {
-                x: {
-                    ticks: { color: '#8b949e', font: { size: 9, family: 'JetBrains Mono' }, maxTicksLimit: 6 },
-                    grid: { color: 'rgba(48,54,61,0.3)' }
-                },
-                y: {
-                    ticks: { color: '#8b949e', font: { size: 10, family: 'JetBrains Mono' } },
-                    grid: { color: 'rgba(48,54,61,0.5)' },
-                    beginAtZero: true
-                }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
+        yAxis: { 
+            type: 'value',
+            splitLine: { lineStyle: { color: 'rgba(48,54,61,0.5)' } },
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 10 }
+        },
+        series: [{
+            data: [],
+            type: 'line',
+            smooth: 0.3,
+            showSymbol: false,
+            areaStyle: { color: colors.bg },
+            lineStyle: { color: colors.border, width: 2 },
+            animationDurationUpdate: 0
+        }]
+    };
+    chart.setOption(option);
+}
+
+function createHeatmap4x4(chart, viewId) {
+    const option = {
+        backgroundColor: 'transparent',
+        tooltip: { position: 'top' },
+        grid: { top: 10, right: 10, bottom: 10, left: 10 },
+        xAxis: { type: 'category', data: ['Col 0', 'Col 1', 'Col 2', 'Col 3'], show: false },
+        yAxis: { type: 'category', data: ['Row 0', 'Row 1', 'Row 2', 'Row 3'], show: false },
+        visualMap: {
+            min: 0,
+            max: 5000,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            bottom: '0%',
+            show: false,
+            inRange: { color: ['#161b22', '#2c003e', '#f72585', '#00e5ff', '#ffffff'] }
+        },
+        series: [{
+            name: 'Energy',
+            type: 'heatmap',
+            data: [],
+            label: { show: true, color: '#fff', fontSize: 14, fontFamily: 'JetBrains Mono' },
+            itemStyle: { borderColor: '#30363d', borderWidth: 2 },
+            animation: false
+        }]
+    };
+    chart.setOption(option);
 }
 
 // ===== HEATMAP DRAWING =====
-function drawHeatmap4x4(canvas, data) {
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width = canvas.parentElement.clientWidth;
-    const h = canvas.height = canvas.parentElement.clientHeight;
-    const cellW = w / 4;
-    const cellH = h / 4;
-    const maxVal = Math.max(...data, 1);
 
-    for (let row = 0; row < 4; row++) {
-        for (let col = 0; col < 4; col++) {
-            const idx = row * 4 + col;
-            const intensity = data[idx] / maxVal;
-            const r = Math.floor(intensity * 255);
-            const g = Math.floor((1 - intensity) * 50);
-            const b = Math.floor((1 - intensity) * 200 + intensity * 50);
-            ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-            ctx.fillRect(col * cellW + 1, row * cellH + 1, cellW - 2, cellH - 2);
-
-            // Label
-            ctx.fillStyle = intensity > 0.5 ? '#fff' : '#8b949e';
-            ctx.font = '11px JetBrains Mono';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const label = data[idx] > 1000 ? (data[idx] / 1000).toFixed(1) + 'k' : data[idx].toFixed(0);
-            ctx.fillText(`Ch${idx}`, col * cellW + cellW / 2, row * cellH + cellH / 2 - 8);
-            ctx.font = 'bold 13px JetBrains Mono';
-            ctx.fillText(label, col * cellW + cellW / 2, row * cellH + cellH / 2 + 10);
-        }
-    }
-}
-
-function drawHeatmap256(canvas, data) {
+// ECharts heatmap handles 4x4 now.\nfunction drawHeatmap256(canvas, data) {
     const ctx = canvas.getContext('2d');
     const size = Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
     canvas.width = 256;
@@ -830,25 +811,35 @@ function updateAllPanels() {
         const { chart, chartType } = panelInfo;
 
         if (chartType === 'bar' && viewId === 'calorimeter_energy') {
-            chart.data.datasets[0].data = Array.from(dataBuffers.calorimeter_energy);
-            chart.update('none');
+            chart.setOption({ series: [{ data: Array.from(dataBuffers.calorimeter_energy) }] });
             const total = dataBuffers.calorimeter_energy.reduce((a, b) => a + b, 0);
             updateFooter(viewId, `Total Energy: ${(total/1000).toFixed(1)}k ADC`);
         }
         else if (chartType === 'heatmap' && viewId === 'calorimeter_heatmap') {
-            drawHeatmap4x4(chart.canvas, dataBuffers.calorimeter_heatmap);
+            // ECharts expects [[x, y, value], ...]
+            const hmData = [];
+            let maxVal = 1;
+            for(let r=0; r<4; r++) {
+                for(let c=0; c<4; c++) {
+                    const val = dataBuffers.calorimeter_heatmap[r*4 + c];
+                    hmData.push([c, 3-r, val]); // Invert Y for ECharts heatmap
+                    if(val > maxVal) maxVal = val;
+                }
+            }
+            chart.setOption({ 
+                visualMap: { max: maxVal },
+                series: [{ data: hmData }] 
+            });
             const total = dataBuffers.calorimeter_heatmap.reduce((a, b) => a + b, 0);
             updateFooter(viewId, `Total: ${(total/1000).toFixed(1)}k`);
         }
         else if (chartType === 'histogram' && viewId === 'scintillator_timing') {
-            chart.data.datasets[0].data = Array.from(dataBuffers.scintillator_timing).slice(0, 30);
-            chart.update('none');
+            chart.setOption({ series: [{ data: Array.from(dataBuffers.scintillator_timing).slice(0, 30) }] });
             const total = dataBuffers.scintillator_timing.reduce((a, b) => a + b, 0);
             updateFooter(viewId, `Entries: ${total.toFixed(0)}`);
         }
         else if (chartType === 'histogram' && viewId === 'scintillator_pe') {
-            chart.data.datasets[0].data = Array.from(dataBuffers.scintillator_pe);
-            chart.update('none');
+            chart.setOption({ series: [{ data: Array.from(dataBuffers.scintillator_pe) }] });
             const total = dataBuffers.scintillator_pe.reduce((a, b) => a + b, 0);
             updateFooter(viewId, `Entries: ${total.toFixed(0)}`);
         }
@@ -858,22 +849,21 @@ function updateAllPanels() {
             updateFooter(viewId, `Total Hits: ${totalHits}`);
         }
         else if (chartType === 'histogram' && viewId === 'timepix_tot') {
-            chart.data.datasets[0].data = Array.from(dataBuffers.timepix_tot).slice(0, 50);
-            chart.update('none');
+            chart.setOption({ series: [{ data: Array.from(dataBuffers.timepix_tot).slice(0, 50) }] });
             const total = dataBuffers.timepix_tot.reduce((a, b) => a + b, 0);
             updateFooter(viewId, `Entries: ${total.toFixed(0)}`);
         }
         else if (chartType === 'histogram' && viewId === 'cherenkov_qdc') {
-            chart.data.datasets[0].data = Array.from(dataBuffers.cherenkov_qdc);
-            chart.update('none');
+            chart.setOption({ series: [{ data: Array.from(dataBuffers.cherenkov_qdc) }] });
             const total = dataBuffers.cherenkov_qdc.reduce((a, b) => a + b, 0);
             updateFooter(viewId, `Entries: ${total.toFixed(0)}`);
         }
         else if (chartType === 'timeseries' && viewId === 'trigger_rate') {
             const points = dataBuffers.trigger_rate;
-            chart.data.labels = points.map(p => new Date(p.t).toLocaleTimeString());
-            chart.data.datasets[0].data = points.map(p => p.v);
-            chart.update('none');
+            chart.setOption({ 
+                xAxis: { data: points.map(p => new Date(p.t).toLocaleTimeString()) },
+                series: [{ data: points.map(p => p.v) }] 
+            });
             const last = points.length > 0 ? points[points.length - 1].v : 0;
             updateFooter(viewId, `Last Trigger ID: ${last}`);
         }
@@ -895,7 +885,15 @@ function updateFooter(viewId, text) {
 }
 
 // Update at 10 FPS
-setInterval(updateAllPanels, 100);
+
+window.addEventListener('resize', () => {
+    for (const panelInfo of Object.values(activePanels)) {
+        if (panelInfo.chart && typeof panelInfo.chart.resize === 'function') {
+            panelInfo.chart.resize();
+        }
+    }
+});
+\nsetInterval(updateAllPanels, 100);
 </script>
 
 </body>
