@@ -100,14 +100,52 @@ Constellation comes out of the box with standard tools (**MissionControl**, **Ob
 │  ┌────────────────────────────────────────────────────────────────────┐  │
 │  │ BL4S Live Event Explorer (HTML5 / Apache ECharts / Dark UI)           │  │
 │  │ http://localhost:5050                                              │  │
-│  │ ├── 📂 Calorimeter: 16-ch Energy Histogram & 4x4 Heatmap           │  │
-│  │ ├── 📂 Scintillator: Timing & Photoelectron Distribution           │  │
-│  │ ├── 📂 Timepix: 256x256 Hit Map & ToT Spectrum                     │  │
-│  │ ├── 📂 Cherenkov: QDC Spectrum (Electron / Pion separation)        │  │
-│  │ └── 📂 Trigger: Live Rate Time Series                              │  │
+│  │ ├── 📂 Online PID: e⁻ / π⁻ Beam Composition & 2D Scatter Matrix    │  │
+│  │ ├── 📂 Event Display: 2D Live Beamline Track & Shower Profiler     │  │
+│  │ ├── 📂 Calibrated Energy: Real-time MeV Spectrum                   │  │
+│  │ ├── 📂 DQM Suite: Channel Health Auditing & JSON/CSV Export        │  │
+│  │ └── 📂 Detector Views: 16-ch Calo, Scint, Timepix, Cherenkov, Trig │  │
 │  └────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 3.1 End-to-End Data Pipeline Flow
+
+```
+[1. CERN Server / Detector Satellites] (Geant4 / Monte Carlo Engine)
+       │  Generates realistic particle events at configured rate (e.g., 100 Hz - 10 kHz)
+       ▼
+[2. Split Pipeline (Parallel Non-Blocking Architecture)]
+       ├──▶ A) Constellation CDTP (ZMQ) ──▶ SatelliteH5DataWriter ──▶ .h5 Data Files (CERNBox/EOS)
+       │       (Lossless, raw binary disk recording for offline physics analysis)
+       │
+       └──▶ B) Google Protocol Buffers (Kafka Producer)
+               │ (Encodes event into compact binary payload: .proto schema)
+               ▼
+[3. Reverse SSH Tunnel (Port 9092)] (CERN ➔ Local Machine Transport)
+       │ (Zero-loss distributed event streaming across remote networks)
+       ▼
+[4. Local Kafka Broker & Flask-SocketIO Engine (Python)]
+       │ (Consumes Protobuf events, flattens & batches in 100ms windows)
+       ▼
+[5. Real-Time Web Observability Suite (Apache ECharts & Canvas)]
+       (Renders 10 FPS hardware-accelerated histograms, 2D tracking & online PID)
+```
+
+### 3.2 Monte Carlo Physics Engine vs. Beam Rate Model
+
+A common question in DAQ design is: **How are physics simulation and particle arrival rates coupled?**
+
+1. **Physics Event Generation (Monte Carlo / Geant4 Layer):**
+   * Computes **what occurs** during a single particle passage:
+     * **Electrons ($e^-$):** High energy electromagnetic showers simulated with Gaussian/Poisson energy deposition across the 4×4 Lead Glass matrix, accompanied by high Cherenkov photon yields ($QDC > 1500$).
+     * **Pions / Muons ($\pi^- / \mu^-$):** Minimum Ionizing Particle (MIP) behavior modeled via asymmetric **Landau/Gamma distributions** ($QDC < 800$, low shower spread).
+     * **Silicon Tracking:** Pixel cluster coordinate generation on the $256 \times 256$ Timepix3 sensor.
+2. **Beam Rate & Arrival Timing (Temporal Engine):**
+   * Computes **when events arrive**:
+     * Governed by the `rate` parameter in `bl4s_config.toml` (e.g. `rate = 100.0` Hz).
+     * Inter-event arrival times follow a **Poisson stochastic process** ($\Delta t = -\ln(u)/\lambda$) modeling realistic accelerator spill delivery.
+     * The DAQ framework throttles the loop to match target beam frequency without CPU spinning.
 
 ---
 

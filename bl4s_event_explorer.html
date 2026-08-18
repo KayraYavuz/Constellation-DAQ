@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BL4S Live Event Explorer</title>
+    <title>BL4S Live Event Explorer & Physics Suite</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -16,12 +16,13 @@
             --border: #333333;
             --text-primary: #e1e4e8;
             --text-secondary: #8b949e;
-            --accent-cyan: #3b82f6; /* Blue */
-            --accent-magenta: #ef4444; /* Red */
-            --accent-green: #10b981; /* Emerald */
-            --accent-orange: #f59e0b; /* Amber */
-            --accent-purple: #8b5cf6; /* Purple */
-            --accent-yellow: #eab308; /* Yellow */
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-yellow: #eab308;
+            --accent-cyan: #06b6d4;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -37,8 +38,8 @@
 
         /* ===== SIDEBAR ===== */
         .sidebar {
-            width: 300px;
-            min-width: 300px;
+            width: 320px;
+            min-width: 320px;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border);
             display: flex;
@@ -47,19 +48,20 @@
         }
 
         .sidebar-header {
-            padding: 20px;
+            padding: 18px 20px;
             border-bottom: 1px solid var(--border);
             background: var(--bg-secondary);
         }
 
         .sidebar-header h1 {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
-            color: var(--accent-cyan);
+            color: var(--accent-blue);
             display: flex;
             align-items: center;
             gap: 8px;
             font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.5px;
         }
 
         .sidebar-header .subtitle {
@@ -81,12 +83,9 @@
             width: 8px; height: 8px;
             border-radius: 50%;
             background: var(--accent-green);
-            
         }
 
-        .status-dot.disconnected { background: #f85149; animation: none; }
-
-
+        .status-dot.disconnected { background: var(--accent-red); }
 
         .tree-container {
             flex: 1;
@@ -97,8 +96,16 @@
         .tree-container::-webkit-scrollbar { width: 6px; }
         .tree-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-        /* Tree nodes */
         .tree-root { padding: 0 12px; }
+
+        .tree-category-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin: 12px 8px 6px 8px;
+            font-weight: 700;
+        }
 
         .tree-sat {
             margin-bottom: 4px;
@@ -108,7 +115,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 12px;
+            padding: 7px 12px;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.15s ease;
@@ -118,9 +125,8 @@
 
         .tree-sat-header:hover { background: var(--bg-hover); }
 
-        .tree-sat-header .icon { font-size: 16px; }
         .tree-sat-header .chevron {
-            font-size: 10px;
+            font-size: 9px;
             color: var(--text-secondary);
             transition: transform 0.2s ease;
             margin-left: auto;
@@ -130,7 +136,7 @@
 
         .tree-children {
             display: none;
-            padding-left: 20px;
+            padding-left: 14px;
         }
 
         .tree-children.open { display: block; }
@@ -153,12 +159,21 @@
         }
 
         .tree-view-item.active {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--accent-cyan);
-            border-left: 2px solid var(--accent-cyan);
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-blue);
+            font-weight: 600;
+            border-left: 3px solid var(--accent-blue);
         }
 
-        .tree-view-item .view-icon { font-size: 14px; }
+        .badge-tag {
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: auto;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
 
         /* ===== MAIN CONTENT ===== */
         .main-content {
@@ -198,7 +213,7 @@
         .stat-value {
             font-family: 'JetBrains Mono', monospace;
             font-weight: 600;
-            color: var(--accent-cyan);
+            color: var(--accent-blue);
         }
 
         .panels-container {
@@ -206,7 +221,7 @@
             padding: 16px;
             overflow-y: auto;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
             grid-auto-rows: min-content;
             gap: 16px;
             align-content: start;
@@ -226,31 +241,34 @@
             color: var(--text-secondary);
         }
 
-        .empty-state .big-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.3; }
-        .empty-state h2 { font-size: 18px; margin-bottom: 8px; color: var(--text-primary); }
+        .empty-state h2 { font-size: 17px; margin-bottom: 8px; color: var(--text-primary); }
         .empty-state p { font-size: 13px; }
 
         /* ===== CHART PANELS ===== */
         .chart-panel {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 8px;
             overflow: hidden;
-            animation: panelIn 0.3s ease;
+            animation: panelIn 0.2s ease;
+        }
+
+        .chart-panel.full-width {
+            grid-column: 1 / -1;
         }
 
         @keyframes panelIn {
-            from { opacity: 0; transform: translateY(10px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .panel-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 10px 14px;
             border-bottom: 1px solid var(--border);
-            background: rgba(255,255,255,0.02);
+            background: var(--bg-secondary);
         }
 
         .panel-title {
@@ -265,53 +283,50 @@
             width: 6px; height: 6px;
             border-radius: 50%;
             background: var(--accent-green);
-            
         }
 
         .panel-close {
-            width: 28px; height: 28px;
+            width: 24px; height: 24px;
             border: none;
             background: transparent;
             color: var(--text-secondary);
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.15s;
         }
 
-        .panel-close:hover { background: rgba(248,81,73,0.2); color: #f85149; }
+        .panel-close:hover { background: rgba(239,68,68,0.2); color: var(--accent-red); }
 
         .panel-body {
-            padding: 16px;
+            padding: 12px;
             height: 280px;
             position: relative;
         }
 
-        .panel-body canvas { width: 100% !important; height: 100% !important; }
-
-        /* Heatmap canvas */
-        .heatmap-canvas {
-            image-rendering: pixelated;
-            border-radius: 4px;
+        .panel-body.tall {
+            height: 360px;
         }
 
         .panel-footer {
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 11px;
             color: var(--text-secondary);
             font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-secondary);
         }
 
-        .btn-reset {
+        .btn-action {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid rgba(59, 130, 246, 0.3);
-            color: var(--accent-cyan);
+            color: var(--accent-blue);
             padding: 3px 10px;
             border-radius: 4px;
             font-size: 11px;
@@ -320,8 +335,74 @@
             transition: all 0.15s;
         }
 
-        .btn-reset:hover {
-            background: rgba(59, 130, 246, 0.2);
+        .btn-action:hover {
+            background: rgba(59, 130, 246, 0.25);
+        }
+
+        .btn-action.btn-green {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--accent-green);
+        }
+        .btn-action.btn-green:hover { background: rgba(16, 185, 129, 0.25); }
+
+        /* Event display canvas */
+        .event-display-canvas {
+            width: 100%;
+            height: 100%;
+            background: #18181b;
+            border-radius: 4px;
+        }
+
+        /* DQM Table */
+        .dqm-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .dqm-card {
+            background: #1e1e24;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .dqm-card-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dqm-status-pill {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .dqm-status-pill.good { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .dqm-status-pill.warn { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+        .dqm-status-pill.bad { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+
+        .dqm-metric {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-cyan);
+            margin: 6px 0;
+        }
+
+        .dqm-sub {
+            font-size: 10px;
+            color: var(--text-secondary);
         }
     </style>
 </head>
@@ -330,8 +411,8 @@
 <!-- ===== SIDEBAR ===== -->
 <aside class="sidebar">
     <div class="sidebar-header">
-        <h1> BL4S Event Explorer</h1>
-        <div class="subtitle">Real-time DAQ Observability</div>
+        <h1>BL4S Event Explorer</h1>
+        <div class="subtitle">Real-time DAQ Observability & Analytics</div>
     </div>
     <div class="status-bar">
         <div class="status-dot" id="statusDot"></div>
@@ -339,19 +420,54 @@
     </div>
     <div class="tree-container">
         <div class="tree-root" id="treeRoot">
+
+            <!-- 🔬 Physics & Advanced Analytics -->
+            <div class="tree-category-title">Physics & Multi-Detector Analytics</div>
+
+            <div class="tree-sat">
+                <div class="tree-sat-header expanded" onclick="toggleSat(this)">
+                    <span>Particle Identification (PID)</span>
+                    <span class="chevron">▶</span>
+                </div>
+                <div class="tree-children open">
+                    <div class="tree-view-item" onclick="openPanel('pid_overview', 'Physics', 'Beam Composition (e⁻ / π⁻ PID)', 'pid_pie')" data-view="pid_overview">
+                        <span>Beam Composition (e⁻/π⁻)</span>
+                        <span class="badge-tag">PID</span>
+                    </div>
+                    <div class="tree-view-item" onclick="openPanel('pid_correlation', 'Physics', 'Calo vs Cherenkov Coincidence Matrix', 'pid_scatter')" data-view="pid_correlation">
+                        <span>PID Coincidence Matrix</span>
+                        <span class="badge-tag">2D</span>
+                    </div>
+                    <div class="tree-view-item" onclick="openPanel('beamline_display', 'Physics', 'Beamline 2D Event Display & Tracking', 'event_display', true)" data-view="beamline_display">
+                        <span>Beamline Event Display</span>
+                        <span class="badge-tag">Track</span>
+                    </div>
+                    <div class="tree-view-item" onclick="openPanel('calorimeter_calibrated', 'Calorimeter', 'Calorimeter Calibrated Energy (MeV)', 'calib_hist')" data-view="calorimeter_calibrated">
+                        <span>Calibrated Energy (MeV)</span>
+                        <span class="badge-tag">Calib</span>
+                    </div>
+                    <div class="tree-view-item" onclick="openPanel('dqm_summary', 'System', 'Data Quality Monitoring (DQM) & Export', 'dqm_view', true)" data-view="dqm_summary">
+                        <span>DQM Health & Export</span>
+                        <span class="badge-tag">DQM</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🛰️ Detector Satellites -->
+            <div class="tree-category-title">Detector Satellites</div>
+
             <!-- Calorimeter -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Calorimeter">
-                    <span class="icon"></span>
                     <span>CalorimeterSatellite</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('calorimeter_energy', 'Calorimeter', ' Energy Histogram', 'bar')" data-view="calorimeter_energy">
-                        <span class="view-icon"></span> Energy Histogram (16 ch)
+                    <div class="tree-view-item" onclick="openPanel('calorimeter_energy', 'Calorimeter', 'Energy Histogram (16 ch ADC)', 'bar')" data-view="calorimeter_energy">
+                        <span>Energy Histogram (16 ch)</span>
                     </div>
-                    <div class="tree-view-item" onclick="openPanel('calorimeter_heatmap', 'Calorimeter', ' Channel Heatmap 4×4', 'heatmap')" data-view="calorimeter_heatmap">
-                        <span class="view-icon"></span> Channel Heatmap (4×4)
+                    <div class="tree-view-item" onclick="openPanel('calorimeter_heatmap', 'Calorimeter', 'Channel Heatmap 4×4 Matrix', 'heatmap')" data-view="calorimeter_heatmap">
+                        <span>Channel Heatmap (4×4)</span>
                     </div>
                 </div>
             </div>
@@ -359,16 +475,15 @@
             <!-- Scintillator -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Scintillator">
-                    <span class="icon"></span>
                     <span>ScintillatorSatellite</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('scintillator_timing', 'Scintillator', ' Timing Distribution', 'histogram')" data-view="scintillator_timing">
-                        <span class="view-icon"></span> Timing Distribution
+                    <div class="tree-view-item" onclick="openPanel('scintillator_timing', 'Scintillator', 'TDC Timing Distribution (ns)', 'histogram')" data-view="scintillator_timing">
+                        <span>Timing Distribution</span>
                     </div>
-                    <div class="tree-view-item" onclick="openPanel('scintillator_pe', 'Scintillator', ' Photoelectron Count', 'histogram')" data-view="scintillator_pe">
-                        <span class="view-icon"></span> Photoelectron Count
+                    <div class="tree-view-item" onclick="openPanel('scintillator_pe', 'Scintillator', 'Photoelectron Multiplicity', 'histogram')" data-view="scintillator_pe">
+                        <span>Photoelectron Count</span>
                     </div>
                 </div>
             </div>
@@ -376,16 +491,15 @@
             <!-- Timepix -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Timepix">
-                    <span class="icon"></span>
                     <span>TimepixSatellite</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('timepix_hitmap', 'Timepix', ' Hit Map (256×256)', 'heatmap2d')" data-view="timepix_hitmap">
-                        <span class="view-icon"></span> Hit Map (256×256)
+                    <div class="tree-view-item" onclick="openPanel('timepix_hitmap', 'Timepix', 'Pixel Hit Matrix (256×256)', 'heatmap2d')" data-view="timepix_hitmap">
+                        <span>Hit Map (256×256)</span>
                     </div>
-                    <div class="tree-view-item" onclick="openPanel('timepix_tot', 'Timepix', ' ToT Spectrum', 'histogram')" data-view="timepix_tot">
-                        <span class="view-icon"></span> ToT Spectrum
+                    <div class="tree-view-item" onclick="openPanel('timepix_tot', 'Timepix', 'Time-over-Threshold (ToT) Spectrum', 'histogram')" data-view="timepix_tot">
+                        <span>ToT Spectrum</span>
                     </div>
                 </div>
             </div>
@@ -393,13 +507,12 @@
             <!-- Cherenkov -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Cherenkov">
-                    <span class="icon"></span>
                     <span>CherenkovSatellite</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('cherenkov_qdc', 'Cherenkov', ' QDC Spectrum (e/π PID)', 'histogram')" data-view="cherenkov_qdc">
-                        <span class="view-icon"></span> QDC Spectrum (e/π PID)
+                    <div class="tree-view-item" onclick="openPanel('cherenkov_qdc', 'Cherenkov', 'Cherenkov QDC Integral (PID)', 'histogram')" data-view="cherenkov_qdc">
+                        <span>QDC Spectrum (e/π)</span>
                     </div>
                 </div>
             </div>
@@ -407,16 +520,16 @@
             <!-- Trigger -->
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Trigger">
-                    <span class="icon"></span>
                     <span>TriggerModule</span>
                     <span class="chevron">▶</span>
                 </div>
                 <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('trigger_rate', 'Trigger', ' Trigger Rate', 'timeseries')" data-view="trigger_rate">
-                        <span class="view-icon"></span> Trigger Rate
+                    <div class="tree-view-item" onclick="openPanel('trigger_rate', 'Trigger', 'Trigger Instantaneous Rate', 'timeseries')" data-view="trigger_rate">
+                        <span>Trigger Rate Series</span>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </aside>
@@ -424,18 +537,22 @@
 <!-- ===== MAIN CONTENT ===== -->
 <main class="main-content">
     <div class="top-bar">
-        <div class="breadcrumb"> bl4s / live</div>
+        <div class="breadcrumb">bl4s / online-observability</div>
         <div class="stats">
             <div class="stat-item">
-                <span>Events/s:</span>
-                <span class="stat-value" id="eventsPerSec">0</span>
+                <span>Rate:</span>
+                <span class="stat-value" id="eventsPerSec">0 ev/s</span>
             </div>
             <div class="stat-item">
                 <span>Total:</span>
                 <span class="stat-value" id="totalEvents">0</span>
             </div>
             <div class="stat-item">
-                <span>Panels:</span>
+                <span>e⁻ / π⁻ Ratio:</span>
+                <span class="stat-value" id="topPidRatio">--</span>
+            </div>
+            <div class="stat-item">
+                <span>Active Panels:</span>
                 <span class="stat-value" id="panelCount">0</span>
             </div>
         </div>
@@ -443,34 +560,50 @@
 
     <div class="panels-container" id="panelsContainer">
         <div class="empty-state" id="emptyState">
-            <div class="big-icon"></div>
             <h2>No Active Views</h2>
-            <p>Click on a satellite view in the sidebar to open a live panel</p>
+            <p>Select a detector or physics analysis panel from the sidebar to begin live monitoring.</p>
         </div>
     </div>
 </main>
 
 <script>
-// ===== STATE =====
+// ===== GLOBAL STATE & BUFFERS =====
 const activePanels = {};
 let totalEventCount = 0;
 let eventCountThisSecond = 0;
 let lastSecondTimestamp = Date.now();
 
-// Data buffers for each view
 const dataBuffers = {
+    // Detector buffers
     calorimeter_energy: new Float64Array(16),
     calorimeter_heatmap: new Float64Array(16),
-    scintillator_timing: new Float64Array(100),  // 100 bins from 0-20 ns
-    scintillator_pe: new Float64Array(60),       // 60 bins from 0-60 PE
-    timepix_hitmap: null,                        // Will be a 256x256 Uint32Array
-    timepix_tot: new Float64Array(100),          // 100 bins from 0-1000 ToT
-    cherenkov_qdc: new Float64Array(100),        // 100 bins from 0-5000 QDC
-    trigger_rate: [],                            // Time series [{t, v}]
+    scintillator_timing: new Float64Array(100),
+    scintillator_pe: new Float64Array(60),
+    timepix_hitmap: new Uint32Array(256 * 256),
+    timepix_tot: new Float64Array(100),
+    cherenkov_qdc: new Float64Array(100),
+    trigger_rate: [],
+
+    // Advanced Physics & Multi-Detector Analytics
+    pid_counts: { electron: 0, pion: 0, other: 0 },
+    pid_correlation: [], // [[qdc, energy, type], ...] max 400 points
+    calorimeter_calibrated: new Float64Array(50), // 0 to 5000 MeV in 100 MeV bins
+    latest_event: {
+        scintillator_pe: 0,
+        timepix_x: 128,
+        timepix_y: 128,
+        cherenkov_qdc: 0,
+        calorimeter_energy: 0,
+        particle_type: 'Waiting...',
+        timestamp: Date.now()
+    },
+    dqm_channel_hits: new Uint32Array(16),
+    dqm_total_calorimeter_events: 0
 };
 
-// Initialize Timepix hitmap
-dataBuffers.timepix_hitmap = new Uint32Array(256 * 256);
+// Calibration parameters
+const CALIB_PEDESTAL = 100.0; // ADC counts
+const CALIB_GAIN = 0.085;     // MeV / ADC count
 
 // ===== SOCKET.IO =====
 const socket = io('http://localhost:5050');
@@ -495,7 +628,7 @@ socket.on('event_batch', (data) => {
     }
 });
 
-// ===== EVENT ROUTING =====
+// ===== EVENT ROUTING & MULTI-DETECTOR COINCIDENCE =====
 function routeEvent(event) {
     const sat = event.sat;
 
@@ -504,6 +637,15 @@ function routeEvent(event) {
         if (ch >= 0 && ch < 16) {
             dataBuffers.calorimeter_energy[ch] += event.energy;
             dataBuffers.calorimeter_heatmap[ch] += event.energy;
+            dataBuffers.dqm_channel_hits[ch]++;
+            dataBuffers.dqm_total_calorimeter_events++;
+
+            // Calibrated MeV spectrum calculation
+            const calibE = Math.max(0, (event.energy - CALIB_PEDESTAL) * CALIB_GAIN);
+            const calibBin = Math.min(49, Math.floor(calibE / 100));
+            dataBuffers.calorimeter_calibrated[calibBin]++;
+
+            dataBuffers.latest_event.calorimeter_energy = event.energy;
         }
     } else if (sat === 'Scintillator') {
         const timeBin = Math.floor(event.time);
@@ -514,6 +656,7 @@ function routeEvent(event) {
         if (peBin >= 0 && peBin < 60) {
             dataBuffers.scintillator_pe[peBin]++;
         }
+        dataBuffers.latest_event.scintillator_pe = event.n_pe;
     } else if (sat === 'Timepix') {
         if (event.x >= 0 && event.x < 256 && event.y >= 0 && event.y < 256) {
             dataBuffers.timepix_hitmap[event.y * 256 + event.x]++;
@@ -521,50 +664,85 @@ function routeEvent(event) {
             if (totBin >= 0 && totBin < 100) {
                 dataBuffers.timepix_tot[totBin]++;
             }
+            dataBuffers.latest_event.timepix_x = event.x;
+            dataBuffers.latest_event.timepix_y = event.y;
         }
     } else if (sat === 'Cherenkov') {
         const qdcBin = Math.floor(event.qdc / 50);
         if (qdcBin >= 0 && qdcBin < 100) {
             dataBuffers.cherenkov_qdc[qdcBin]++;
         }
+        dataBuffers.latest_event.cherenkov_qdc = event.qdc;
+
+        // Online PID Coincidence Logic
+        const qdc = event.qdc;
+        const caloE = dataBuffers.latest_event.calorimeter_energy;
+        let pType = 'other';
+
+        if (qdc > 1200 && caloE > 1500) {
+            dataBuffers.pid_counts.electron++;
+            pType = 'electron';
+            dataBuffers.latest_event.particle_type = 'Electron (e⁻)';
+        } else if (qdc < 800) {
+            dataBuffers.pid_counts.pion++;
+            pType = 'pion';
+            dataBuffers.latest_event.particle_type = 'Pion (π⁻) / MIP';
+        } else {
+            dataBuffers.pid_counts.other++;
+            pType = 'other';
+            dataBuffers.latest_event.particle_type = 'Ambiguous / Hadron';
+        }
+
+        dataBuffers.pid_correlation.push([qdc, caloE, pType]);
+        if (dataBuffers.pid_correlation.length > 400) {
+            dataBuffers.pid_correlation.shift();
+        }
     } else if (sat === 'Trigger') {
         dataBuffers.trigger_rate.push({ t: Date.now(), v: event.id });
-        // Keep last 200 points
         if (dataBuffers.trigger_rate.length > 200) {
             dataBuffers.trigger_rate.shift();
         }
     }
 }
 
-// ===== TREE TOGGLING =====
+// ===== TREE EXPANSION =====
 function toggleSat(header) {
     header.classList.toggle('expanded');
     const children = header.nextElementSibling;
     children.classList.toggle('open');
 }
 
-// ===== PANEL MANAGEMENT =====
-function openPanel(viewId, satellite, title, chartType) {
-    // Toggle: if already open, close it
+// ===== PANEL LIFECYCLE =====
+function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
     if (activePanels[viewId]) {
         closePanel(viewId);
         return;
     }
 
-    // Mark tree item as active
     document.querySelectorAll(`.tree-view-item[data-view="${viewId}"]`).forEach(el => el.classList.add('active'));
-
-    // Hide empty state
     document.getElementById('emptyState').style.display = 'none';
 
-    // Create panel element
     const panel = document.createElement('div');
-    panel.className = 'chart-panel';
+    panel.className = `chart-panel ${isFullWidth ? 'full-width' : ''}`;
     panel.id = `panel-${viewId}`;
     
-    const bodyContent = (chartType === 'heatmap2d') 
-        ? `<canvas id="canvas-${viewId}"></canvas>` 
-        : `<div id="chart-${viewId}" style="width: 100%; height: 100%;"></div>`;
+    let bodyContent = '';
+    let footerButtons = `<button class="btn-action" onclick="resetBuffer('${viewId}')">Reset</button>`;
+
+    if (chartType === 'heatmap2d') {
+        bodyContent = `<canvas id="canvas-${viewId}"></canvas>`;
+    } else if (chartType === 'event_display') {
+        bodyContent = `<canvas id="canvas-display" class="event-display-canvas"></canvas>`;
+    } else if (chartType === 'dqm_view') {
+        bodyContent = `<div id="dqm-container" class="dqm-grid"></div>`;
+        footerButtons = `
+            <button class="btn-action btn-green" onclick="exportDqmJson()">Export DQM JSON</button>
+            <button class="btn-action" onclick="downloadCsvHistograms()">Download CSV</button>
+            <button class="btn-action" onclick="resetBuffer('${viewId}')">Reset Counters</button>
+        `;
+    } else {
+        bodyContent = `<div id="chart-${viewId}" style="width: 100%; height: 100%;"></div>`;
+    }
 
     panel.innerHTML = `
         <div class="panel-header">
@@ -574,22 +752,26 @@ function openPanel(viewId, satellite, title, chartType) {
             </div>
             <button class="panel-close" onclick="closePanel('${viewId}')" title="Close">✕</button>
         </div>
-        <div class="panel-body">
+        <div class="panel-body ${isFullWidth ? 'tall' : ''}">
             ${bodyContent}
         </div>
         <div class="panel-footer">
-            <span id="footer-${viewId}">Waiting for data...</span>
-            <button class="btn-reset" onclick="resetBuffer('${viewId}')">Reset</button>
+            <span id="footer-${viewId}">Waiting for live data...</span>
+            <div>${footerButtons}</div>
         </div>
     `;
 
     document.getElementById('panelsContainer').appendChild(panel);
 
-    // Create chart
     let chart = null;
 
     if (chartType === 'heatmap2d') {
         chart = { type: 'heatmap2d', canvas: document.getElementById(`canvas-${viewId}`) };
+    } else if (chartType === 'event_display') {
+        chart = { type: 'event_display', canvas: document.getElementById(`canvas-display`) };
+    } else if (chartType === 'dqm_view') {
+        chart = { type: 'dqm_view' };
+        renderDqmGrid();
     } else {
         const dom = document.getElementById(`chart-${viewId}`);
         chart = echarts.init(dom);
@@ -601,6 +783,12 @@ function openPanel(viewId, satellite, title, chartType) {
             createHeatmap4x4(chart, viewId);
         } else if (chartType === 'timeseries') {
             createTimeSeriesChart(chart, viewId);
+        } else if (chartType === 'pid_pie') {
+            createPidPieChart(chart);
+        } else if (chartType === 'pid_scatter') {
+            createPidScatterChart(chart);
+        } else if (chartType === 'calib_hist') {
+            createCalibratedHistChart(chart);
         }
     }
 
@@ -619,7 +807,6 @@ function closePanel(viewId) {
             }
             delete activePanels[viewId];
             updatePanelCount();
-            // Show empty state if no panels
             if (Object.keys(activePanels).length === 0) {
                 document.getElementById('emptyState').style.display = 'flex';
             }
@@ -631,6 +818,9 @@ function closePanel(viewId) {
 function resetBuffer(viewId) {
     if (viewId === 'timepix_hitmap') {
         dataBuffers.timepix_hitmap.fill(0);
+    } else if (viewId === 'pid_overview' || viewId === 'pid_correlation') {
+        dataBuffers.pid_counts = { electron: 0, pion: 0, other: 0 };
+        dataBuffers.pid_correlation.length = 0;
     } else if (dataBuffers[viewId] instanceof Float64Array || dataBuffers[viewId] instanceof Uint32Array) {
         dataBuffers[viewId].fill(0);
     } else if (Array.isArray(dataBuffers[viewId])) {
@@ -642,25 +832,24 @@ function updatePanelCount() {
     document.getElementById('panelCount').textContent = Object.keys(activePanels).length;
 }
 
-// ===== CHART CREATORS =====
+// ===== CHART CREATION FUNCTIONS =====
 const chartColors = {
-    calorimeter_energy: { bg: 'rgba(0,229,255,0.6)', border: '#00e5ff' },
+    calorimeter_energy: { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6' },
     calorimeter_heatmap: {},
-    scintillator_timing: { bg: 'rgba(57,211,83,0.6)', border: '#39d353' },
-    scintillator_pe: { bg: 'rgba(240,136,62,0.6)', border: '#f0883e' },
-    timepix_tot: { bg: 'rgba(163,113,247,0.6)', border: '#a371f7' },
-    cherenkov_qdc: { bg: 'rgba(247,37,133,0.6)', border: '#f72585' },
-    trigger_rate: { bg: 'rgba(227,179,65,0.3)', border: '#e3b341' },
+    scintillator_timing: { bg: 'rgba(16, 185, 129, 0.2)', border: '#10b981' },
+    scintillator_pe: { bg: 'rgba(139, 92, 246, 0.2)', border: '#8b5cf6' },
+    timepix_tot: { bg: 'rgba(245, 158, 11, 0.2)', border: '#f59e0b' },
+    cherenkov_qdc: { bg: 'rgba(239, 68, 68, 0.2)', border: '#ef4444' },
+    trigger_rate: { bg: 'rgba(99, 102, 241, 0.2)', border: '#6366f1' },
 };
 
-
 function createBarChart(chart, viewId) {
-    const colors = chartColors[viewId] || { bg: 'rgba(0,229,255,0.6)', border: '#00e5ff' };
+    const colors = chartColors[viewId] || { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6' };
     const labels = Array.from({ length: 16 }, (_, i) => `Ch ${i}`);
     
-    const option = {
+    chart.setOption({
         backgroundColor: 'transparent',
-        grid: { top: 10, right: 10, bottom: 20, left: 40 },
+        grid: { top: 12, right: 12, bottom: 24, left: 45 },
         xAxis: { 
             type: 'category', 
             data: labels,
@@ -668,21 +857,20 @@ function createBarChart(chart, viewId) {
         },
         yAxis: { 
             type: 'value',
-            splitLine: { lineStyle: { color: 'rgba(48,54,61,0.5)' } },
+            splitLine: { lineStyle: { color: '#27272a' } },
             axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 10 }
         },
         series: [{
             data: new Array(16).fill(0),
             type: 'bar',
-            itemStyle: { color: colors.border, borderRadius: [3, 3, 0, 0] },
-            animationDurationUpdate: 100
+            itemStyle: { color: colors.border, borderRadius: [2, 2, 0, 0] },
+            animationDurationUpdate: 80
         }]
-    };
-    chart.setOption(option);
+    });
 }
 
 function createHistogramChart(chart, viewId) {
-    const colors = chartColors[viewId] || { bg: 'rgba(0,229,255,0.6)', border: '#00e5ff' };
+    const colors = chartColors[viewId] || { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6' };
     let binCount, labelFn;
 
     if (viewId === 'scintillator_timing') {
@@ -699,9 +887,9 @@ function createHistogramChart(chart, viewId) {
 
     const labels = Array.from({ length: binCount }, (_, i) => labelFn(i));
     
-    const option = {
+    chart.setOption({
         backgroundColor: 'transparent',
-        grid: { top: 10, right: 10, bottom: 20, left: 40 },
+        grid: { top: 12, right: 12, bottom: 24, left: 45 },
         xAxis: { 
             type: 'category', 
             data: labels,
@@ -709,26 +897,24 @@ function createHistogramChart(chart, viewId) {
         },
         yAxis: { 
             type: 'value',
-            splitLine: { lineStyle: { color: 'rgba(48,54,61,0.5)' } },
+            splitLine: { lineStyle: { color: '#27272a' } },
             axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 10 }
         },
         series: [{
             data: new Array(binCount).fill(0),
             type: 'bar',
-            barWidth: '100%',
+            barWidth: '95%',
             itemStyle: { color: colors.border },
-            animationDurationUpdate: 100
+            animationDurationUpdate: 80
         }]
-    };
-    chart.setOption(option);
+    });
 }
 
 function createTimeSeriesChart(chart, viewId) {
-    const colors = chartColors[viewId] || { bg: 'rgba(227,179,65,0.3)', border: '#e3b341' };
-    
-    const option = {
+    const colors = chartColors[viewId] || { bg: 'rgba(99, 102, 241, 0.2)', border: '#6366f1' };
+    chart.setOption({
         backgroundColor: 'transparent',
-        grid: { top: 10, right: 10, bottom: 20, left: 40 },
+        grid: { top: 12, right: 12, bottom: 24, left: 45 },
         xAxis: { 
             type: 'category', 
             data: [],
@@ -736,24 +922,23 @@ function createTimeSeriesChart(chart, viewId) {
         },
         yAxis: { 
             type: 'value',
-            splitLine: { lineStyle: { color: 'rgba(48,54,61,0.5)' } },
+            splitLine: { lineStyle: { color: '#27272a' } },
             axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 10 }
         },
         series: [{
             data: [],
             type: 'line',
-            smooth: 0.3,
+            smooth: true,
             showSymbol: false,
             areaStyle: { color: colors.bg },
             lineStyle: { color: colors.border, width: 2 },
             animationDurationUpdate: 0
         }]
-    };
-    chart.setOption(option);
+    });
 }
 
 function createHeatmap4x4(chart, viewId) {
-    const option = {
+    chart.setOption({
         backgroundColor: 'transparent',
         tooltip: { position: 'top' },
         grid: { top: 10, right: 10, bottom: 10, left: 10 },
@@ -763,27 +948,210 @@ function createHeatmap4x4(chart, viewId) {
             min: 0,
             max: 5000,
             calculable: true,
-            orient: 'horizontal',
-            left: 'center',
-            bottom: '0%',
             show: false,
-            inRange: { color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026'] } /* Standard RdYlBu */
+            inRange: { color: ['#1e1e24', '#313695', '#4575b4', '#74add1', '#ffffbf', '#fdae61', '#d73027'] }
         },
         series: [{
             name: 'Energy',
             type: 'heatmap',
             data: [],
-            label: { show: true, color: '#fff', fontSize: 14, fontFamily: 'JetBrains Mono' },
-            itemStyle: { borderColor: '#30363d', borderWidth: 2 },
+            label: { show: true, color: '#fff', fontSize: 13, fontFamily: 'JetBrains Mono' },
+            itemStyle: { borderColor: '#121212', borderWidth: 2 },
             animation: false
         }]
-    };
-    chart.setOption(option);
+    });
 }
 
-// ===== HEATMAP DRAWING =====
+function createPidPieChart(chart) {
+    chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'item' },
+        legend: { bottom: '5%', left: 'center', textStyle: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 11 } },
+        series: [{
+            name: 'Particle Type',
+            type: 'pie',
+            radius: ['45%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: { borderRadius: 6, borderColor: '#121212', borderWidth: 2 },
+            label: { show: false, position: 'center' },
+            emphasis: {
+                label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#fff' }
+            },
+            data: [
+                { value: 0, name: 'Electron (e⁻)', itemStyle: { color: '#3b82f6' } },
+                { value: 0, name: 'Pion (π⁻) / MIP', itemStyle: { color: '#f59e0b' } },
+                { value: 0, name: 'Other / Hadron', itemStyle: { color: '#6b7280' } }
+            ]
+        }]
+    });
+}
 
-// ECharts heatmap handles 4x4 now.
+function createPidScatterChart(chart) {
+    chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 15, right: 15, bottom: 30, left: 55 },
+        xAxis: {
+            name: 'Cherenkov QDC',
+            nameLocation: 'middle',
+            nameGap: 18,
+            nameTextStyle: { color: '#8b949e', fontSize: 10 },
+            type: 'value',
+            min: 0, max: 4500,
+            splitLine: { lineStyle: { color: '#27272a' } },
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 9 }
+        },
+        yAxis: {
+            name: 'Calorimeter Energy (ADC)',
+            nameLocation: 'middle',
+            nameGap: 38,
+            nameTextStyle: { color: '#8b949e', fontSize: 10 },
+            type: 'value',
+            min: 0, max: 65000,
+            splitLine: { lineStyle: { color: '#27272a' } },
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 9 }
+        },
+        series: [{
+            type: 'scatter',
+            symbolSize: 6,
+            data: [],
+            itemStyle: {
+                color: (param) => {
+                    const type = param.data[2];
+                    if (type === 'electron') return '#3b82f6';
+                    if (type === 'pion') return '#f59e0b';
+                    return '#6b7280';
+                }
+            },
+            animation: false
+        }]
+    });
+}
+
+function createCalibratedHistChart(chart) {
+    const labels = Array.from({ length: 50 }, (_, i) => `${i * 100}-${(i+1)*100}`);
+    chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 15, right: 15, bottom: 25, left: 50 },
+        xAxis: { 
+            type: 'category', 
+            data: labels,
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 9, interval: 4 }
+        },
+        yAxis: { 
+            name: 'Events',
+            type: 'value',
+            splitLine: { lineStyle: { color: '#27272a' } },
+            axisLabel: { color: '#8b949e', fontFamily: 'JetBrains Mono', fontSize: 9 }
+        },
+        series: [{
+            name: 'Calibrated Energy',
+            data: new Array(50).fill(0),
+            type: 'bar',
+            barWidth: '90%',
+            itemStyle: { color: '#10b981', borderRadius: [2, 2, 0, 0] },
+            animationDurationUpdate: 80
+        }]
+    });
+}
+
+// ===== 2D BEAMLINE EVENT DISPLAY RENDERER =====
+function drawBeamlineEventDisplay(canvas) {
+    const ctx = canvas.getContext('2d');
+    const width = canvas.parentElement.clientWidth;
+    const height = canvas.parentElement.clientHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Clear background
+    ctx.fillStyle = '#18181b';
+    ctx.fillRect(0, 0, width, height);
+
+    // Setup coordinates
+    const midY = height / 2;
+    const event = dataBuffers.latest_event;
+
+    // Draw Beam Axis
+    ctx.strokeStyle = '#27272a';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(20, midY);
+    ctx.lineTo(width - 20, midY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 1. Scintillator Trigger Counters S1 & S2
+    const s1X = width * 0.15;
+    const s2X = width * 0.28;
+    drawDetectorBox(ctx, s1X, midY, 14, 80, 'S1', event.scintillator_pe > 0 ? '#10b981' : '#3f3f46');
+    drawDetectorBox(ctx, s2X, midY, 14, 80, 'S2', event.scintillator_pe > 0 ? '#10b981' : '#3f3f46');
+
+    // 2. Timepix3 Tracker
+    const tpX = width * 0.45;
+    drawDetectorBox(ctx, tpX, midY, 18, 100, 'Timepix3', '#f59e0b');
+    // Hit spot on Timepix
+    const hitOffsetY = ((event.timepix_y - 128) / 128) * 40;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(tpX, midY + hitOffsetY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Cherenkov Gas Detector
+    const chX = width * 0.65;
+    drawDetectorBox(ctx, chX, midY, 40, 110, 'Cherenkov', event.cherenkov_qdc > 1000 ? '#06b6d4' : '#3f3f46');
+
+    // 4. Lead Glass Calorimeter
+    const caloX = width * 0.85;
+    drawDetectorBox(ctx, caloX, midY, 50, 120, 'Calorimeter', event.calorimeter_energy > 2000 ? '#3b82f6' : '#3f3f46');
+
+    // Draw Reconstructed Particle Track
+    const trackColor = (event.particle_type.includes('Electron')) ? '#3b82f6' : 
+                       (event.particle_type.includes('Pion')) ? '#f59e0b' : '#10b981';
+    
+    ctx.strokeStyle = trackColor;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(10, midY);
+    ctx.lineTo(s1X, midY);
+    ctx.lineTo(s2X, midY);
+    ctx.lineTo(tpX, midY + hitOffsetY);
+    ctx.lineTo(chX, midY + hitOffsetY * 1.1);
+    ctx.lineTo(caloX, midY + hitOffsetY * 1.2);
+    ctx.stroke();
+
+    // Shower spreading in calorimeter
+    if (event.calorimeter_energy > 5000) {
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.35)';
+        ctx.beginPath();
+        ctx.moveTo(caloX - 25, midY + hitOffsetY * 1.2);
+        ctx.lineTo(caloX + 25, midY + hitOffsetY * 1.2 - 25);
+        ctx.lineTo(caloX + 25, midY + hitOffsetY * 1.2 + 25);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // Particle ID Header Banner on Canvas
+    ctx.font = '12px JetBrains Mono';
+    ctx.fillStyle = '#e1e4e8';
+    ctx.fillText(`Event PID: ${event.particle_type}`, 20, 28);
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillText(`Calo: ${Math.round(event.calorimeter_energy)} ADC | Cherenkov: ${Math.round(event.cherenkov_qdc)} QDC | Timepix (X,Y): (${event.timepix_x}, ${event.timepix_y})`, 20, 44);
+}
+
+function drawDetectorBox(ctx, x, y, w, h, label, color) {
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(x - w/2, y - h/2, w, h);
+    ctx.strokeRect(x - w/2, y - h/2, w, h);
+
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '9px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x, y + h/2 + 14);
+}
+
 function drawHeatmap256(canvas, data) {
     const ctx = canvas.getContext('2d');
     const size = Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
@@ -799,16 +1167,84 @@ function drawHeatmap256(canvas, data) {
     for (let i = 0; i < 256 * 256; i++) {
         const intensity = Math.min(data[i] / Math.max(maxVal * 0.5, 1), 1);
         const idx = i * 4;
-        // Viridis-like colormap
-        imgData.data[idx] = Math.floor(intensity * 200 + (1 - intensity) * 20);     // R
-        imgData.data[idx + 1] = Math.floor(intensity * 50 + (1 - intensity) * 10);   // G
-        imgData.data[idx + 2] = Math.floor((1 - intensity) * 180 + intensity * 30);  // B
-        imgData.data[idx + 3] = data[i] > 0 ? 255 : 40;                              // A
+        imgData.data[idx] = Math.floor(intensity * 220 + (1 - intensity) * 25);
+        imgData.data[idx + 1] = Math.floor(intensity * 100 + (1 - intensity) * 20);
+        imgData.data[idx + 2] = Math.floor((1 - intensity) * 160 + intensity * 40);
+        imgData.data[idx + 3] = data[i] > 0 ? 255 : 40;
     }
     ctx.putImageData(imgData, 0, 0);
 }
 
-// ===== UPDATE LOOP =====
+// ===== DQM RENDER & EXPORT =====
+function renderDqmGrid() {
+    const container = document.getElementById('dqm-container');
+    if (!container) return;
+
+    let html = '';
+    const totalCalo = dataBuffers.dqm_total_calorimeter_events || 1;
+    const avgHits = totalCalo / 16;
+
+    for (let ch = 0; ch < 16; ch++) {
+        const hits = dataBuffers.dqm_channel_hits[ch];
+        let statusClass = 'good';
+        let statusText = 'HEALTHY';
+
+        if (hits === 0 && totalCalo > 100) {
+            statusClass = 'bad';
+            statusText = 'DEAD';
+        } else if (hits > avgHits * 2.8 && totalCalo > 100) {
+            statusClass = 'warn';
+            statusText = 'NOISY';
+        }
+
+        html += `
+            <div class="dqm-card">
+                <div class="dqm-card-header">
+                    <span>Calo Ch ${ch}</span>
+                    <span class="dqm-status-pill ${statusClass}">${statusText}</span>
+                </div>
+                <div class="dqm-metric">${hits.toLocaleString()}</div>
+                <div class="dqm-sub">Hits recorded</div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
+function exportDqmJson() {
+    const report = {
+        experiment: "CERN BL4S Beamline DAQ",
+        generatedAt: new Date().toISOString(),
+        totalEvents: totalEventCount,
+        pidBreakdown: dataBuffers.pid_counts,
+        calorimeterHits: Array.from(dataBuffers.dqm_channel_hits),
+        scintillatorStats: {
+            totalHits: dataBuffers.scintillator_pe.reduce((a, b) => a + b, 0)
+        }
+    };
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BL4S_DQM_Report_${Date.now()}.json`;
+    a.click();
+}
+
+function downloadCsvHistograms() {
+    let csv = "Channel,Calorimeter_Total_ADC,Calorimeter_Hits\n";
+    for (let i = 0; i < 16; i++) {
+        csv += `${i},${dataBuffers.calorimeter_energy[i]},${dataBuffers.dqm_channel_hits[i]}\n`;
+    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BL4S_Histograms_${Date.now()}.csv`;
+    a.click();
+}
+
+// ===== MAIN ANIMATION & UPDATE LOOP (10 FPS) =====
 function updateAllPanels() {
     for (const [viewId, panelInfo] of Object.entries(activePanels)) {
         const { chart, chartType } = panelInfo;
@@ -819,22 +1255,18 @@ function updateAllPanels() {
             updateFooter(viewId, `Total Energy: ${(total/1000).toFixed(1)}k ADC`);
         }
         else if (chartType === 'heatmap' && viewId === 'calorimeter_heatmap') {
-            // ECharts expects [[x, y, value], ...]
             const hmData = [];
             let maxVal = 1;
-            for(let r=0; r<4; r++) {
-                for(let c=0; c<4; c++) {
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
                     const val = dataBuffers.calorimeter_heatmap[r*4 + c];
-                    hmData.push([c, 3-r, val]); // Invert Y for ECharts heatmap
-                    if(val > maxVal) maxVal = val;
+                    hmData.push([c, 3-r, val]);
+                    if (val > maxVal) maxVal = val;
                 }
             }
-            chart.setOption({ 
-                visualMap: { max: maxVal },
-                series: [{ data: hmData }] 
-            });
+            chart.setOption({ visualMap: { max: maxVal }, series: [{ data: hmData }] });
             const total = dataBuffers.calorimeter_heatmap.reduce((a, b) => a + b, 0);
-            updateFooter(viewId, `Total: ${(total/1000).toFixed(1)}k`);
+            updateFooter(viewId, `Total Energy: ${(total/1000).toFixed(1)}k ADC`);
         }
         else if (chartType === 'histogram' && viewId === 'scintillator_timing') {
             chart.setOption({ series: [{ data: Array.from(dataBuffers.scintillator_timing).slice(0, 30) }] });
@@ -849,7 +1281,7 @@ function updateAllPanels() {
         else if (chartType === 'heatmap2d' && viewId === 'timepix_hitmap') {
             drawHeatmap256(chart.canvas, dataBuffers.timepix_hitmap);
             const totalHits = dataBuffers.timepix_hitmap.reduce((a, b) => a + b, 0);
-            updateFooter(viewId, `Total Hits: ${totalHits}`);
+            updateFooter(viewId, `Total Pixel Hits: ${totalHits.toLocaleString()}`);
         }
         else if (chartType === 'histogram' && viewId === 'timepix_tot') {
             chart.setOption({ series: [{ data: Array.from(dataBuffers.timepix_tot).slice(0, 50) }] });
@@ -870,24 +1302,65 @@ function updateAllPanels() {
             const last = points.length > 0 ? points[points.length - 1].v : 0;
             updateFooter(viewId, `Last Trigger ID: ${last}`);
         }
+        else if (chartType === 'pid_pie' && viewId === 'pid_overview') {
+            const { electron, pion, other } = dataBuffers.pid_counts;
+            const total = electron + pion + other;
+            const ePercent = total > 0 ? ((electron / total) * 100).toFixed(1) : 0;
+            const piPercent = total > 0 ? ((pion / total) * 100).toFixed(1) : 0;
+            
+            chart.setOption({
+                series: [{
+                    data: [
+                        { value: electron, name: `Electron (e⁻): ${ePercent}%` },
+                        { value: pion, name: `Pion (π⁻) / MIP: ${piPercent}%` },
+                        { value: other, name: `Hadron / Other` }
+                    ]
+                }]
+            });
+            updateFooter(viewId, `Total PID Events: ${total.toLocaleString()} | e⁻: ${electron} | π⁻: ${pion}`);
+        }
+        else if (chartType === 'pid_scatter' && viewId === 'pid_correlation') {
+            chart.setOption({
+                series: [{ data: dataBuffers.pid_correlation }]
+            });
+            updateFooter(viewId, `Coincidence Points: ${dataBuffers.pid_correlation.length} | Live Cluster Separation`);
+        }
+        else if (chartType === 'calib_hist' && viewId === 'calorimeter_calibrated') {
+            chart.setOption({
+                series: [{ data: Array.from(dataBuffers.calorimeter_calibrated) }]
+            });
+            const total = dataBuffers.calorimeter_calibrated.reduce((a, b) => a + b, 0);
+            updateFooter(viewId, `Pedestal: ${CALIB_PEDESTAL} ADC | Gain: ${CALIB_GAIN} MeV/ADC | Events: ${total}`);
+        }
+        else if (chartType === 'event_display' && viewId === 'beamline_display') {
+            drawBeamlineEventDisplay(chart.canvas);
+            updateFooter(viewId, `Live Particle: ${dataBuffers.latest_event.particle_type}`);
+        }
+        else if (chartType === 'dqm_view' && viewId === 'dqm_summary') {
+            renderDqmGrid();
+            updateFooter(viewId, `Total Events Audited: ${dataBuffers.dqm_total_calorimeter_events.toLocaleString()}`);
+        }
     }
 
-    // Update global stats
+    // Update global top stats
     const now = Date.now();
     if (now - lastSecondTimestamp >= 1000) {
-        document.getElementById('eventsPerSec').textContent = eventCountThisSecond.toLocaleString();
+        document.getElementById('eventsPerSec').textContent = `${eventCountThisSecond.toLocaleString()} ev/s`;
         eventCountThisSecond = 0;
         lastSecondTimestamp = now;
     }
     document.getElementById('totalEvents').textContent = totalEventCount.toLocaleString();
+
+    const { electron, pion } = dataBuffers.pid_counts;
+    if (electron + pion > 0) {
+        document.getElementById('topPidRatio').textContent = `${((electron / (electron + pion)) * 100).toFixed(1)}% e⁻`;
+    }
 }
 
 function updateFooter(viewId, text) {
     const el = document.getElementById(`footer-${viewId}`);
     if (el) el.textContent = text;
 }
-
-// Update at 10 FPS
 
 window.addEventListener('resize', () => {
     for (const panelInfo of Object.values(activePanels)) {
