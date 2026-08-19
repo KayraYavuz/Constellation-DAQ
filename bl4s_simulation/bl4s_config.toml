@@ -3,11 +3,18 @@ output_directory = "/eos/user/k/kyavuz/bl4s_data"
 flush_interval = 10.0
 
 [TriggerModuleSatellite.pc_bl4s_07]
-# Basic trigger module configuration
-trigger_rate = 100.0
+raw_rate = 120.0
+coincidence_window_ns = 10.0
+s1_threshold_pe = 5
+s2_threshold_pe = 5
+readout_deadtime_ms = 3.5
+require_cherenkov_tag = false
 
 [ScintillatorSatellite.pc_bl4s_07]
 channels = 2
+rate = 100.0
+
+[DWCSatellite.pc_bl4s_07]
 rate = 100.0
 
 [TimepixSatellite.pc_bl4s_07]
@@ -19,6 +26,25 @@ rate = 100.0
 [CalorimeterSatellite.pc_bl4s_07]
 channels = 16
 rate = 100.0
+
+[MachineLearningSatellite.pc_bl4s_07]
+model_type = "BL4S_QuadraticDiscriminant_PID_v3.0"
+anomaly_threshold = 25.0
+rate = 50.0
+
+[PhysicsReconstructionSatellite.pc_bl4s_07]
+target_to_calo_dist_mm = 1500.0
+calo_cell_pitch_mm = 30.0
+magnetic_field_tesla = 0.5
+magnet_length_m = 0.4
+rate = 50.0
+
+[SlowControlSatellite.pc_bl4s_07]
+interval_sec = 1.0
+
+[CoincidenceEventBuilder.pc_bl4s_07]
+coincidence_window_ns = 10.0
+rate = 40.0
 
 [PrometheusExporter.pc_bl4s_07]
 metrics_port = 9100

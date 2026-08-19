@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/kayrayavuz/Desktop/DATA/Constellation-DAQ-Git/bl4s_simulation/src/bl4s_satellites/MachineLearningSatellite.py", line 9, in <module>
+    from constellation.core.satellite import Satellite
+ModuleNotFoundError: No module named 'constellation'

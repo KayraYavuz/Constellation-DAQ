@@ -1,76 +1,170 @@
 import json
-import random
 import time
-from typing import Any
+import random
+import threading
+import numpy as np
+from typing import Dict, Any, Optional
 
 from constellation.core.satellite import Satellite
 from constellation.core.configuration import Configuration
 
 class TriggerModuleSatellite(Satellite):
     """
-    Python implementation of TriggerModuleSatellite
-    It uses telemetry (STAT) to send software trigger IDs.
-    Includes optional Kafka streaming for live observability.
+    Advanced Hardware Trigger & Control Board Satellite (BL4S Logic Unit).
+    Implements:
+    1. Multi-Stage Scintillator Coincidence Logic (S1 AND S2 AND [NOT VETO] AND [Cherenkov TAG])
+    2. DAQ Readout Busy & Inhibit Gate (Dead-time Veto Management)
+    3. Live Real-Time Telemetry: Dead Time %, Live Time %, Accepted vs Vetoed Trigger Rates
     """
     def do_initializing(self, config: Configuration) -> None:
-        self.trigger_id = 0
+        self._raw_trigger_rate = config.get_float("raw_rate", default_value=120.0) # Raw particle rate (Hz)
+        self._coincidence_window_ns = config.get_float("coincidence_window_ns", default_value=10.0)
+        self._s1_threshold_pe = config.get_int("s1_threshold_pe", default_value=5)
+        self._s2_threshold_pe = config.get_int("s2_threshold_pe", default_value=5)
+        self._readout_deadtime_ms = config.get_float("readout_deadtime_ms", default_value=3.5) # Dead-time per event
+        self._require_cherenkov_tag = config.get_bool("require_cherenkov_tag", default_value=False)
+        
+        # Internal State & Counters
+        self._trigger_id = 0
+        self._raw_events = 0
+        self._coincidence_matches = 0
+        self._vetoed_busy_triggers = 0
+        self._accepted_triggers = 0
+        
+        self._is_busy = False
+        self._busy_until = 0.0
+        
+        # Register Constellation telemetry metrics
         if hasattr(self, "_mnt") and self._mnt:
-            self._mnt.register_metric("SWTRIG", "", "Software trigger signal, carries the trigger ID")
-        self.log.info("TriggerModuleSatellite initialized")
+            self._mnt.register_metric("SWTRIG", "", "Accepted Trigger ID")
+            self._mnt.register_metric("DEAD_TIME_PCT", "%", "DAQ Dead Time Percentage")
+            self._mnt.register_metric("IS_BUSY", "bool", "Control Board Readout Busy Flag")
 
-        # --- Kafka Live Streaming (Optional) ---
+        self.log.info(
+            f"Trigger Control Board initialized (Coincidence: +- {self._coincidence_window_ns}ns, "
+            f"Dead-Time: {self._readout_deadtime_ms}ms, CherenkovTag: {self._require_cherenkov_tag})"
+        )
+
+        # --- Kafka Streaming for Live Telemetry ---
         self._kafka_producer = None
         self._kafka_topic = "bl4s_events"
-        self._last_kafka_time = time.time()
+        self._last_telemetry_time = time.time()
+        self._init_kafka()
+
+    def _init_kafka(self):
         try:
             from kafka import KafkaProducer
             self._kafka_producer = KafkaProducer(
                 bootstrap_servers=['localhost:9092'],
-                value_serializer=lambda x: x.SerializeToString(),
-                request_timeout_ms=1000,
-                max_block_ms=500
+                value_serializer=lambda x: json.dumps(x).encode('utf-8'),
+                request_timeout_ms=500,
+                max_block_ms=200
             )
-            self.log.info("Trigger Kafka live streaming ENABLED on localhost:9092 (Protobuf)")
-        except Exception as e:
-            self.log.warning(f"Kafka not available ({e}). Running without live streaming.")
+            self.log.info("Trigger Control Board Kafka streaming ENABLED on localhost:9092")
+        except Exception:
+            self._kafka_producer = None
 
-    def do_starting(self, run_identifier: str) -> str:
-        self.trigger_id = 0
-        self._last_kafka_time = time.time()
-        self.log.info("TriggerModuleSatellite starting")
-        return "Starting"
+    def evaluate_trigger_logic(self) -> Dict[str, Any]:
+        """
+        Simulates hardware discriminator pulses, coincidence AND gate, and BUSY veto inhibit.
+        """
+        now = time.time()
+        self._raw_events += 1
+        
+        # 1. Update BUSY state based on dead-time clock
+        if self._is_busy and now >= self._busy_until:
+            self._is_busy = False
 
-    def poll_register(self) -> bool:
-        return random.random() < 0.000001
+        # 2. Simulate Scintillator Pulses (Photo-electrons & TDC timings)
+        has_particle = random.random() < 0.85
+        if has_particle:
+            s1_pe = np.random.poisson(32)
+            s2_pe = np.random.poisson(30)
+            t_s1 = np.random.normal(10.0, 0.4) # ns
+            t_s2 = np.random.normal(10.8, 0.4) # ns
+            cherenkov_qdc = np.random.normal(500, 150)
+        else:
+            s1_pe = np.random.poisson(2)
+            s2_pe = np.random.poisson(1)
+            t_s1 = np.random.uniform(0, 50)
+            t_s2 = np.random.uniform(0, 50)
+            cherenkov_qdc = np.random.exponential(20)
+
+        # Coincidence Condition: S1 >= Thresh AND S2 >= Thresh AND |t1 - t2| <= delta_t
+        s1_pass = s1_pe >= self._s1_threshold_pe
+        s2_pass = s2_pe >= self._s2_threshold_pe
+        timing_pass = abs(t_s1 - t_s2) <= self._coincidence_window_ns
+        cherenkov_pass = True if not self._require_cherenkov_tag else (cherenkov_qdc > 300.0)
+
+        is_valid_coincidence = s1_pass and s2_pass and timing_pass and cherenkov_pass
+
+        trigger_decision = "NO_COINCIDENCE"
+        is_triggered = False
+
+        if is_valid_coincidence:
+            self._coincidence_matches += 1
+            # 3. Check Control Board BUSY Inhibit Gate
+            if self._is_busy:
+                # DAQ is reading out previous event -> VETO / INHIBIT
+                self._vetoed_busy_triggers += 1
+                trigger_decision = "VETOED_BUSY"
+            else:
+                # DAQ is ready -> ACCEPT TRIGGER
+                self._trigger_id += 1
+                self._accepted_triggers += 1
+                self._is_busy = True
+                self._busy_until = now + (self._readout_deadtime_ms / 1000.0)
+                trigger_decision = "TRIGGER_ACCEPTED"
+                is_triggered = True
+                self.stat("SWTRIG", self._trigger_id)
+
+        # Telemetry metrics
+        dead_time_pct = round((self._vetoed_busy_triggers / max(self._coincidence_matches, 1)) * 100.0, 1)
+        live_time_pct = round(100.0 - dead_time_pct, 1)
+        efficiency_pct = round((self._accepted_triggers / max(self._raw_events, 1)) * 100.0, 1)
+
+        return {
+            "sat": "TriggerControlBoard",
+            "trigger_id": self._trigger_id,
+            "decision": trigger_decision,
+            "is_triggered": is_triggered,
+            "is_busy": self._is_busy,
+            "s1_pe": int(s1_pe),
+            "s2_pe": int(s2_pe),
+            "delta_t_ns": round(float(t_s1 - t_s2), 2),
+            "coincidence_passed": is_valid_coincidence,
+            "cherenkov_qdc": round(float(cherenkov_qdc), 1),
+            "dead_time_pct": dead_time_pct,
+            "live_time_pct": live_time_pct,
+            "trigger_efficiency_pct": efficiency_pct,
+            "total_raw_events": self._raw_events,
+            "total_coincidences": self._coincidence_matches,
+            "total_vetoed_busy": self._vetoed_busy_triggers,
+            "total_accepted": self._accepted_triggers,
+            "timestamp": now
+        }
 
     def do_run(self) -> str:
-        import bl4s_events_pb2
         while not self.stop_requested():
-            if self.poll_register():
-                self.trigger_id += 1
-                self.stat("SWTRIG", self.trigger_id)
-                self.log.debug(f"Sent software trigger with ID {self.trigger_id}")
-
-            # Send trigger rate to Kafka every 500ms
+            decision_data = self.evaluate_trigger_logic()
+            
+            # Broadcast to Kafka every 100ms or upon accepted trigger
             now = time.time()
-            if self._kafka_producer and (now - self._last_kafka_time) >= 0.5:
+            if self._kafka_producer and (decision_data["is_triggered"] or (now - self._last_telemetry_time) >= 0.1):
                 try:
-                    event = bl4s_events_pb2.BL4SEvent(sat="Trigger")
-                    event.trigger.id = self.trigger_id
-                    event.trigger.timestamp = now
-                    self._kafka_producer.send(self._kafka_topic, value=event)
-                    self._last_kafka_time = now
+                    self._kafka_producer.send(self._kafka_topic, value=decision_data)
                 except Exception:
                     pass
-                self._last_kafka_time = now
+                self._last_telemetry_time = now
 
-            time.sleep(0.0001)
+            time.sleep(1.0 / self._raw_trigger_rate)
+
         return "Finished run"
 
 def main(args=None):
     from constellation.core.satellite import SatelliteArgumentParser
     from constellation.core.logging import setup_cli_logging
-    parser = SatelliteArgumentParser(description="Trigger Module Satellite")
+    parser = SatelliteArgumentParser(description="BL4S Advanced Trigger & Control Board Satellite")
     args = vars(parser.parse_args(args))
     setup_cli_logging(args.pop("level"))
     name = args.pop("name", "TriggerModule")

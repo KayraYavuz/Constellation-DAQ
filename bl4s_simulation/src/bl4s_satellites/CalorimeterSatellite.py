@@ -5,29 +5,58 @@ from Geant4ReplaySatellite import Geant4ReplaySatellite
 
 class CalorimeterSatellite(Geant4ReplaySatellite):
     """
-    Simulates a Lead Glass Calorimeter.
-    Generates realistic energy depositions (dE/dx) following a Landau distribution.
+    Simulates the 16-channel (4x4) Lead Glass Electromagnetic Calorimeter
+    for the BL4S 2026 Team PionIST 3 Experiment: Neutral Pion (pi0 -> gamma gamma) Decay.
     """
     def do_starting(self, payload: str):
         super().do_starting(payload)
-        self.log.info(f"Calorimeter initialized with {self._channels} channels")
+        self.log.info(f"PionIST 3 Lead Glass Calorimeter initialized with {self._channels} channels")
 
     def generate_physics_event(self) -> bytes:
         payload = bytearray()
         
-        # Determine if it's an electron (high shower) or pion (MIP)
-        is_electron = np.random.rand() > 0.5
+        # 70% Neutral Pion decay (pi0 -> gamma + gamma), 30% background/charged MIP
+        is_pi0 = np.random.rand() > 0.30
         
+        # 16-channel energy distribution array
+        energies = np.zeros(16, dtype=np.float64)
+        
+        if is_pi0:
+            # pi0 kinematics in lab frame (E_pi0 ~ 1.5 - 4.0 GeV)
+            e_pi0 = np.random.uniform(1800, 3800) # MeV
+            # Energy sharing asymmetry z = E1 / (E1 + E2)
+            z = np.random.uniform(0.35, 0.65)
+            e1 = e_pi0 * z
+            e2 = e_pi0 * (1.0 - z)
+            
+            # Photon 1 cluster center in 4x4 matrix
+            r1, c1 = np.random.choice([0, 1]), np.random.choice([0, 1, 2, 3])
+            # Photon 2 cluster center (separated by opening angle)
+            r2, c2 = np.random.choice([2, 3]), np.random.choice([0, 1, 2, 3])
+            
+            # Deposit Photon 1 energy with lateral shower spread
+            for r in range(4):
+                for c in range(4):
+                    dist_sq = (r - r1)**2 + (c - c1)**2
+                    frac = np.exp(-dist_sq / 0.8)
+                    energies[r * 4 + c] += (e1 / 0.085) * frac * np.random.normal(1.0, 0.05)
+                    
+            # Deposit Photon 2 energy with lateral shower spread
+            for r in range(4):
+                for c in range(4):
+                    dist_sq = (r - r2)**2 + (c - c2)**2
+                    frac = np.exp(-dist_sq / 0.8)
+                    energies[r * 4 + c] += (e2 / 0.085) * frac * np.random.normal(1.0, 0.05)
+        else:
+            # Charged Pion (MIP) passing through a single crystal
+            ch_hit = np.random.randint(0, 16)
+            energies[ch_hit] = np.random.gamma(shape=2.5, scale=120.0)
+            
+        # Add baseline pedestal noise
         for ch in range(self._channels):
-            # If electron, deposits lots of energy (Electromagnetic Shower)
-            if is_electron:
-                amp = int(np.clip(np.random.normal(3000, 500), 0, 65535))
-            else:
-                # If pion, deposits Minimum Ionizing Particle (MIP) energy (Landau peak)
-                amp = int(np.clip(np.random.gamma(shape=2.0, scale=100.0), 0, 65535))
-                
-            n_hits = np.random.poisson(2)
-            time_val = float(np.random.normal(15.0, 2.0))
+            amp = int(np.clip(energies[ch] + np.random.normal(100, 8), 0, 65535))
+            n_hits = np.random.poisson(3 if amp > 500 else 1)
+            time_val = float(np.random.normal(15.2, 0.8))
             
             # Format: <H B x f -> 8 bytes per channel
             channel_data = struct.pack('<H B x f', amp, n_hits, time_val)
@@ -57,7 +86,7 @@ class CalorimeterSatellite(Geant4ReplaySatellite):
 def main(args=None):
     from constellation.core.satellite import SatelliteArgumentParser
     from constellation.core.logging import setup_cli_logging
-    parser = SatelliteArgumentParser(description="BL4S Calorimeter Satellite")
+    parser = SatelliteArgumentParser(description="BL4S PionIST 3 Calorimeter Satellite")
     args = vars(parser.parse_args(args))
     setup_cli_logging(args.pop("level"))
     data_port = args.pop("data_port", 0)

@@ -31,6 +31,41 @@ message TriggerEvent {
     float timestamp = 2;
 }
 
+message MachineLearningEvent {
+    string prediction = 1;
+    float confidence = 2;
+    float latency_us = 3;
+    float anomaly_score = 4;
+    bool is_anomaly = 5;
+    string model = 6;
+}
+
+message Cluster2D {
+    float x_mm = 1;
+    float y_mm = 2;
+    float energy_mev = 3;
+}
+
+message TrackPoint {
+    string station = 1;
+    float z_mm = 2;
+    float x_mm = 3;
+    float y_mm = 4;
+}
+
+message PhysicsReconstructionEvent {
+    float invariant_mass_mev = 1;
+    float opening_angle_deg = 2;
+    bool is_valid_pi0 = 3;
+    float slope_x_mrad = 4;
+    float slope_y_mrad = 5;
+    float chi2_ndf = 6;
+    float estimated_momentum_gev = 7;
+    Cluster2D cluster1 = 8;
+    Cluster2D cluster2 = 9;
+    repeated TrackPoint track_points = 10;
+}
+
 message BL4SEvent {
     string sat = 1;
     oneof event_data {
@@ -39,5 +74,7 @@ message BL4SEvent {
         TimepixEvent timepix = 4;
         CherenkovEvent cherenkov = 5;
         TriggerEvent trigger = 6;
+        MachineLearningEvent machine_learning = 7;
+        PhysicsReconstructionEvent physics_reconstruction = 8;
     }
 }

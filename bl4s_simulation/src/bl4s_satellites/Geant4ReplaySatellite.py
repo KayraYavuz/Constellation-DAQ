@@ -30,22 +30,27 @@ class Geant4ReplaySatellite(TransmitterSatellite):
         # --- Kafka Live Streaming (Optional) ---
         self._kafka_producer = None
         self._kafka_topic = "bl4s_events"
+        self._last_kafka_attempt = 0
+        self._init_kafka()
+        
+        if hasattr(super(), 'do_initializing'):
+            super().do_initializing(config)
+
+    def _init_kafka(self):
+        """Attempt to initialize Kafka producer."""
         try:
             from kafka import KafkaProducer
             self._kafka_producer = KafkaProducer(
                 bootstrap_servers=['localhost:9092'],
                 value_serializer=lambda x: x.SerializeToString(),
-                request_timeout_ms=1000,
-                max_block_ms=500,
+                request_timeout_ms=500,
+                max_block_ms=200,
                 linger_ms=5,
                 batch_size=16384
             )
             self.log.info("Kafka live streaming ENABLED on localhost:9092 (Protobuf)")
         except Exception as e:
-            self.log.warning(f"Kafka not available ({e}). Running without live streaming.")
-        
-        if hasattr(super(), 'do_initializing'):
-            super().do_initializing(config)
+            self._kafka_producer = None
 
     def generate_physics_event(self) -> bytes:
         """
@@ -61,14 +66,23 @@ class Geant4ReplaySatellite(TransmitterSatellite):
         return []
 
     def _send_to_kafka(self, events: list):
-        """Send decoded events to Kafka, silently ignoring errors."""
-        if self._kafka_producer is None:
+        """Send decoded events to Kafka with seamless automatic reconnection."""
+        if not events:
             return
+        now = time.time()
+        if self._kafka_producer is None:
+            if now - self._last_kafka_attempt >= 4.0:
+                self._last_kafka_attempt = now
+                self._init_kafka()
+            if self._kafka_producer is None:
+                return
+
         try:
             for event in events:
                 self._kafka_producer.send(self._kafka_topic, value=event)
         except Exception:
-            pass
+            self._kafka_producer = None
+            self._last_kafka_attempt = now
 
     def do_starting(self, payload: str) -> str:
         self.log.info(f"Starting physics replay for run: {payload}")
