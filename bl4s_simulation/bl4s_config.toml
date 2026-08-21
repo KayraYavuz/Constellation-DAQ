@@ -1,4 +1,5 @@
 [H5DataWriter.pc_bl4s_07]
+output_directory = "/home/kayra/bl4s_simulation"
 flush_interval = 10.0
 
 [TriggerModuleSatellite.pc_bl4s_07]
