@@ -6,10 +6,12 @@ pkill -9 -f "bl4s_satellites" 2>/dev/null || true
 pkill -9 -f "SatelliteH5DataWriter" 2>/dev/null || true
 pkill -9 -f "bl4s_event_explorer_server" 2>/dev/null || true
 
-# 1.5. Eski verileri arşive taşıyalım (Aynı run ID ile çakışma olmaması için)
-echo "[1/5] Eski veriler arşive (eski_veriler) taşınıyor..."
+# 1.5. Eski verileri arşive taşıyalım ve Python bytecode önbelleğini temizleyelim
+echo "[1/5] Eski veriler arşive taşınıyor ve önbellek temizleniyor..."
 mkdir -p /home/kayra/bl4s_simulation/eski_veriler
 mv /home/kayra/bl4s_simulation/*.h5 /home/kayra/bl4s_simulation/eski_veriler/ 2>/dev/null || true
+find /home/kayra/bl4s_simulation -name "*.pyc" -delete 2>/dev/null || true
+find /home/kayra/bl4s_simulation -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
 # 2. Çevre değişkenlerini sıfırlayalım (CVMFS kirliliğini temizlemek için)
 unset PYTHONPATH
