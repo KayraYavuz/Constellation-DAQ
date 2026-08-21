@@ -7,8 +7,8 @@ pkill -f "SatelliteH5DataWriter"
 
 # 1.5. Eski verileri arşive taşıyalım (Aynı run ID ile çakışma olmaması için)
 echo "[1/5] Eski veriler arşive (eski_veriler) taşınıyor..."
-mkdir -p /eos/user/k/kyavuz/bl4s_data/eski_veriler
-mv /eos/user/k/kyavuz/bl4s_data/*.h5 /eos/user/k/kyavuz/bl4s_data/eski_veriler/ 2>/dev/null || true
+mkdir -p /home/kayra/bl4s_simulation/eski_veriler
+mv /home/kayra/bl4s_simulation/*.h5 /home/kayra/bl4s_simulation/eski_veriler/ 2>/dev/null || true
 
 # 2. Çevre değişkenlerini sıfırlayalım (CVMFS kirliliğini temizlemek için)
 unset PYTHONPATH
