@@ -569,7 +569,7 @@
             left: 12px;
             right: 12px;
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 8px;
             z-index: 10;
         }
@@ -648,7 +648,7 @@
         /* DQM Table */
         .dqm-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 8px;
             height: 100%;
             overflow-y: auto;
@@ -694,6 +694,200 @@
         .dqm-sub { font-size: 10px; color: var(--text-secondary); }
 
         /* ================= ONLINE HISTOGRAM PRESENTER (OHP) STYLES ================= */
+        .ohp-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #161b26;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            margin-bottom: 8px;
+            gap: 10px;
+        }
+        .ohp-toolbar-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ohp-grid-btn-group {
+            display: flex;
+            gap: 4px;
+        }
+        .ohp-grid-btn {
+            background: #1e2536;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .ohp-grid-btn:hover { color: #f1f5f9; background: rgba(255,255,255,0.06); }
+        .ohp-grid-btn.active {
+            background: rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            border-color: #38bdf8;
+            font-weight: 700;
+        }
+        .ohp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            height: calc(100% - 44px);
+            overflow-y: auto;
+            padding: 4px;
+            align-content: start;
+            transition: all 0.2s ease;
+        }
+        .ohp-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .ohp-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .ohp-grid.cols-1 { grid-template-columns: 1fr; }
+
+        .ohp-card {
+            background: #f4f6f9;
+            border: 1px solid #94a3b8;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+        }
+        .ohp-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+            border-color: #38bdf8;
+        }
+        .ohp-card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            color: #0f1117;
+            background: #d7dee8;
+            border-bottom: 1px solid #94a3b8;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            white-space: nowrap;
+        }
+        .ohp-expand-btn {
+            background: rgba(15, 23, 42, 0.1);
+            border: 1px solid rgba(15, 23, 42, 0.2);
+            color: #0f172a;
+            border-radius: 3px;
+            font-size: 11px;
+            padding: 1px 5px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            line-height: 1;
+        }
+        .ohp-expand-btn:hover {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #0284c7;
+        }
+
+        /* OHP ENLARGED MODAL STYLES */
+        .ohp-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(8, 11, 17, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 99990;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .ohp-modal-overlay.active { display: flex; }
+        .ohp-modal-container {
+            background: #111520;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            width: 860px;
+            max-width: 95vw;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+        .ohp-modal-header {
+            background: #181f2e;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ohp-modal-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ohp-modal-close {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .ohp-modal-close:hover { color: #f43f5e; background: rgba(244,63,94,0.15); }
+        .ohp-modal-body {
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            background: #0b0e14;
+        }
+        .ohp-canvas-wrap {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 6px;
+            padding: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+        .ohp-modal-stats {
+            width: 220px;
+            background: #161c28;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .root-stat-header {
+            font-size: 11px;
+            font-weight: 700;
+            color: #38bdf8;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .root-stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+        .root-stat-lbl { color: #94a3b8; }
+        .root-stat-val { color: #f1f5f9; font-weight: 700; }
+
         .ohp-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1059,7 +1253,7 @@
         /* ================= SLOW CONTROL STYLES ================= */
         .slowctrl-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
             height: 100%;
             padding: 8px;
@@ -1198,7 +1392,7 @@
         }
         .tdaq-header-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 10px;
         }
         .tdaq-header-card {
@@ -1429,10 +1623,7 @@
                         <span class="badge-tag">Fit</span>
                     </div>
                     
-                    <div class="tree-view-item" onclick="openPanel('ml_pid_dashboard', 'Machine Learning', '🧠 AI Neural PID Classifier (Real-Time)', 'ml_pid', true)" data-view="ml_pid_dashboard">
-                        <span>🧠 AI Neural PID Inference</span>
-                        <span class="badge-tag highlight" style="background:rgba(168,85,247,0.25);color:#c084fc;border:1px solid #a855f7;">AI / ML</span>
-                    </div>
+
                     <div class="tree-view-item" onclick="openPanel('slow_control_view', 'Slow Control', '🌡️ Slow Control & Hardware Telemetry', 'slow_control', true)" data-view="slow_control_view">
                         <span>🌡️ Slow Control & Hardware</span>
                         <span class="badge-tag" style="background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid #f59e0b;">EPICS</span>
@@ -1955,6 +2146,16 @@ function reconstructPi0Event() {
         dataBuffers.pid_counts.charged_pion++;
         dataBuffers.latest_event.particle_type = 'Charged Hadron / MIP';
     }
+
+    if (dataBuffers.latest_event.cherenkov_qdc && dataBuffers.latest_event.calorimeter_energy) {
+        if (Math.random() < 0.2) {
+            dataBuffers.pid_correlation.push([
+                dataBuffers.latest_event.cherenkov_qdc,
+                dataBuffers.latest_event.calorimeter_energy
+            ]);
+            if (dataBuffers.pid_correlation.length > 500) dataBuffers.pid_correlation.shift();
+        }
+    }
 }
 
 function toggleStreamPause() {
@@ -2282,56 +2483,63 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                                 <th>Status</th>
                                 <th>Throughput / Events</th>
                                 <th>CPU / Mem</th>
+                                <th>Control</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><strong>ROOT_PARTITION</strong> (Controller)</td>
+                                <td><strong>ROOT_PARTITION</strong> (Master Controller)</td>
                                 <td>srv-cern-01</td>
                                 <td>14021</td>
                                 <td><span class="tdaq-pill ok">RUNNING</span></td>
                                 <td>All Segments Active</td>
                                 <td>3.4% / 420 MB</td>
+                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-CALO">
                                 <td>├─ <strong>CALO_SEGMENT</strong> (16ch ADC)</td>
                                 <td>pc_bl4s_01</td>
                                 <td>14032</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-CALO">RUNNING</span></td>
                                 <td>1,420 ev/s (Pb-Glass)</td>
                                 <td>4.2% / 180 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('CALO', this)">Inhibit</button></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-TRACKING">
                                 <td>├─ <strong>TRACKING_SEGMENT</strong> (DWC + Timepix3)</td>
                                 <td>pc_bl4s_02</td>
                                 <td>14045</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-TRACKING">RUNNING</span></td>
                                 <td>850 ev/s (55µm Silicon)</td>
                                 <td>6.8% / 310 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRACKING', this)">Inhibit</button></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-TRIGGER">
                                 <td>├─ <strong>TRIGGER_SEGMENT</strong> (CTP Board + Veto)</td>
                                 <td>pc_bl4s_03</td>
                                 <td>14051</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-TRIGGER">RUNNING</span></td>
                                 <td>DeadTime: 12.4%</td>
                                 <td>1.2% / 64 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRIGGER', this)">Inhibit</button></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-BEAM">
                                 <td>├─ <strong>BEAM_MONITOR_SEGMENT</strong> (S1/S2 + Cherenkov)</td>
                                 <td>pc_bl4s_04</td>
                                 <td>14064</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-BEAM">RUNNING</span></td>
                                 <td>2.45 bar CO2 / Normal</td>
                                 <td>1.8% / 96 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('BEAM', this)">Inhibit</button></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-AI">
                                 <td>├─ <strong>AI_RECON_SEGMENT</strong> (PID Engine + Pi0 Mass)</td>
                                 <td>pc_bl4s_05</td>
                                 <td>14078</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-AI">RUNNING</span></td>
                                 <td>Latency: 3.8 µs</td>
                                 <td>14.2% / 540 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('AI', this)">Inhibit</button></td>
                             </tr>
                             <tr>
                                 <td>└─ <strong>DATA_STORAGE_SEGMENT</strong> (Kafka + HDF5)</td>
@@ -2340,6 +2548,7 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                                 <td><span class="tdaq-pill ok">RUNNING</span></td>
                                 <td>14.8 MB/s (Disk Free: 4.8 TB)</td>
                                 <td>5.1% / 620 MB</td>
+                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
                             </tr>
                         </tbody>
                     </table>
@@ -2422,6 +2631,15 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
 
                 <!-- Tab 5: ERS Message Log -->
                 <div class="tdaq-tab-content" id="tab-${viewId}-ers">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div class="ohp-grid-btn-group">
+                            <button class="ohp-grid-btn active" onclick="filterErsLogs('ALL')">All Logs</button>
+                            <button class="ohp-grid-btn" onclick="filterErsLogs('INFO')">INFO</button>
+                            <button class="ohp-grid-btn" onclick="filterErsLogs('WARN')">WARN</button>
+                            <button class="ohp-grid-btn" onclick="filterErsLogs('ERROR')">ERROR</button>
+                        </div>
+                        <button class="tdaq-grid-btn" onclick="clearErsLogs()">🗑️ Clear Logs</button>
+                    </div>
                     <div class="tdaq-log-box" id="tdaq-ers-log-box">
                         <div class="tdaq-log-line">
                             <span class="tdaq-log-ts">[22:15:01]</span>
@@ -2490,7 +2708,7 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
             ${bodyContent}
         </div>
         <div class="panel-footer">
-            <span id="footer-${viewId}">Waiting for live data...</span>
+            <span id="footer-${viewId}">${(chartType === 'ohp_view' || chartType === 'run_control_console') ? 'System Active' : 'Waiting for live data...'}</span>
             <div>${footerButtons}</div>
         </div>
     `;
@@ -2665,56 +2883,63 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                                 <th>Status</th>
                                 <th>Throughput / Events</th>
                                 <th>CPU / Mem</th>
+                                <th>Control</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><strong>ROOT_PARTITION</strong> (Controller)</td>
+                                <td><strong>ROOT_PARTITION</strong> (Master Controller)</td>
                                 <td>srv-cern-01</td>
                                 <td>14021</td>
                                 <td><span class="tdaq-pill ok">RUNNING</span></td>
                                 <td>All Segments Active</td>
                                 <td>3.4% / 420 MB</td>
+                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-CALO">
                                 <td>├─ <strong>CALO_SEGMENT</strong> (16ch ADC)</td>
                                 <td>pc_bl4s_01</td>
                                 <td>14032</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-CALO">RUNNING</span></td>
                                 <td>1,420 ev/s (Pb-Glass)</td>
                                 <td>4.2% / 180 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('CALO', this)">Inhibit</button></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-TRACKING">
                                 <td>├─ <strong>TRACKING_SEGMENT</strong> (DWC + Timepix3)</td>
                                 <td>pc_bl4s_02</td>
                                 <td>14045</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-TRACKING">RUNNING</span></td>
                                 <td>850 ev/s (55µm Silicon)</td>
                                 <td>6.8% / 310 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRACKING', this)">Inhibit</button></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-TRIGGER">
                                 <td>├─ <strong>TRIGGER_SEGMENT</strong> (CTP Board + Veto)</td>
                                 <td>pc_bl4s_03</td>
                                 <td>14051</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-TRIGGER">RUNNING</span></td>
                                 <td>DeadTime: 12.4%</td>
                                 <td>1.2% / 64 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRIGGER', this)">Inhibit</button></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-BEAM">
                                 <td>├─ <strong>BEAM_MONITOR_SEGMENT</strong> (S1/S2 + Cherenkov)</td>
                                 <td>pc_bl4s_04</td>
                                 <td>14064</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-BEAM">RUNNING</span></td>
                                 <td>2.45 bar CO2 / Normal</td>
                                 <td>1.8% / 96 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('BEAM', this)">Inhibit</button></td>
                             </tr>
-                            <tr>
+                            <tr id="seg-row-AI">
                                 <td>├─ <strong>AI_RECON_SEGMENT</strong> (PID Engine + Pi0 Mass)</td>
                                 <td>pc_bl4s_05</td>
                                 <td>14078</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
+                                <td><span class="tdaq-pill ok" id="seg-pill-AI">RUNNING</span></td>
                                 <td>Latency: 3.8 µs</td>
                                 <td>14.2% / 540 MB</td>
+                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('AI', this)">Inhibit</button></td>
                             </tr>
                             <tr>
                                 <td>└─ <strong>DATA_STORAGE_SEGMENT</strong> (Kafka + HDF5)</td>
@@ -2723,6 +2948,7 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                                 <td><span class="tdaq-pill ok">RUNNING</span></td>
                                 <td>14.8 MB/s (Disk Free: 4.8 TB)</td>
                                 <td>5.1% / 620 MB</td>
+                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
                             </tr>
                         </tbody>
                     </table>
@@ -2805,6 +3031,15 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
 
                 <!-- Tab 5: ERS Message Log -->
                 <div class="tdaq-tab-content" id="tab-${viewId}-ers">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div class="ohp-grid-btn-group">
+                            <button class="ohp-grid-btn active" onclick="filterErsLogs('ALL')">All Logs</button>
+                            <button class="ohp-grid-btn" onclick="filterErsLogs('INFO')">INFO</button>
+                            <button class="ohp-grid-btn" onclick="filterErsLogs('WARN')">WARN</button>
+                            <button class="ohp-grid-btn" onclick="filterErsLogs('ERROR')">ERROR</button>
+                        </div>
+                        <button class="tdaq-grid-btn" onclick="clearErsLogs()">🗑️ Clear Logs</button>
+                    </div>
                     <div class="tdaq-log-box" id="tdaq-ers-log-box">
                         <div class="tdaq-log-line">
                             <span class="tdaq-log-ts">[22:15:01]</span>
@@ -2875,6 +3110,8 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
             createPi0MassChart(chart);
         } else if (chartType === 'fit_hist') {
             createPhysicsFitChart(chart);
+        } else if (chartType === 'coincidence_view') {
+            createCoincidenceChart(chart);
         }
     }
 
@@ -3115,6 +3352,23 @@ function createHeatmap4x4(chart, viewId) {
             animation: false
         }]
     });
+}
+
+
+function createCoincidenceChart(chart) {
+    const option = {
+        tooltip: commonTooltip,
+        xAxis: { type: 'category', data: Array.from({length:50}, (_,i) => i - 25), name: 'Δt (ns)', axisLabel: { color: '#64748b' } },
+        yAxis: { type: 'value', name: 'Events', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }, axisLabel: { color: '#64748b' } },
+        series: [{
+            type: 'bar',
+            data: [],
+            itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1, [{offset:0,color:'#10b981'}, {offset:1,color:'#064e3b'}]) },
+            barWidth: '80%'
+        }],
+        grid: { left: 40, right: 30, top: 40, bottom: 40 }
+    };
+    chart.setOption(option);
 }
 
 function createPidPieChart(chart) {
@@ -4453,6 +4707,17 @@ function updateAllPanels() {
             renderDqmGrid();
             updateFooter(viewId, `Total Events Audited: ${dataBuffers.dqm_total_calorimeter_events.toLocaleString()}`);
         }
+        else if (chartType === 'pid_scatter' && viewId === 'pid_correlation') {
+            chart.setOption({ series: [{ data: dataBuffers.pid_correlation }] });
+            updateFooter(viewId, `Correlation Points: ${dataBuffers.pid_correlation.length}`);
+        }
+        else if (chartType === 'slow_control' && viewId === 'slow_control_view') {
+            updateFooter(viewId, `Last Telemetry Received: ${new Date().toLocaleTimeString()} | SC_ACTIVE`);
+        }
+        else if (chartType === 'coincidence_view' && viewId === 'coincidence_view') {
+            chart.setOption({ series: [{ data: Array.from(dataBuffers.coincidence.delta_t_hist) }] });
+            updateFooter(viewId, `Built Events: ${dataBuffers.coincidence.total_built} | Efficiency: ${dataBuffers.coincidence.efficiency_pct}%`);
+        }
     }
 
     // Top Bar Update
@@ -4548,21 +4813,83 @@ const OHP_CHANNEL_LABELS = {
     Ch11_EVTTRG: 'CountsVsTime_Ch11_EVTTRG'
 };
 
+let currentOhpGridCols = 3;
+let activeOhpModalKey = null;
+
+function setOhpGridCols(cols) {
+    currentOhpGridCols = cols;
+    const grid = document.getElementById('ohp-card-grid');
+    if (!grid) return;
+    grid.className = `ohp-grid cols-${cols}`;
+    
+    document.querySelectorAll('.ohp-grid-btn').forEach(btn => btn.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
+}
+
+function openOhpModal(key) {
+    activeOhpModalKey = key;
+    const overlay = document.getElementById('ohp-modal-overlay');
+    const titleEl = document.getElementById('ohp-modal-title-text');
+    if (titleEl) titleEl.textContent = OHP_CHANNEL_LABELS[key] || key;
+    if (overlay) overlay.classList.add('active');
+    updateOhpModalPlot();
+}
+
+function closeOhpModal() {
+    activeOhpModalKey = null;
+    const overlay = document.getElementById('ohp-modal-overlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
+
+function switchTdaqTab(viewId, tabName) {
+    const wrap = document.getElementById('tdaq-console-' + viewId);
+    if (!wrap) return;
+    
+    // Deactivate all buttons
+    wrap.querySelectorAll('.tdaq-tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Activate clicked button (we'll just use the text match or exact element if we had event, but we can find it by onclick)
+    wrap.querySelectorAll('.tdaq-tab-btn').forEach(btn => {
+        if(btn.getAttribute('onclick').includes("'" + tabName + "'")) btn.classList.add('active');
+    });
+    
+    // Hide all tabs
+    wrap.querySelectorAll('.tdaq-tab-content').forEach(tab => tab.classList.remove('active'));
+    // Show selected tab
+    const selectedTab = wrap.querySelector('#tab-' + viewId + '-' + tabName);
+    if(selectedTab) selectedTab.classList.add('active');
+}
+
 function renderOhpGrid() {
     const container = document.getElementById('ohp-container');
     if (!container) return;
 
-    // Build the card skeleton once; after that we just redraw each canvas
     if (!container.dataset.built) {
-        let html = '';
+        let html = `
+            <div class="ohp-toolbar">
+                <div class="ohp-toolbar-title">
+                    <span>📊</span> Online Histogram Presenter — Scaler Display
+                </div>
+                <div class="ohp-grid-btn-group">
+                    <button class="ohp-grid-btn" onclick="setOhpGridCols(4)">Kompakt (4x4)</button>
+                    <button class="ohp-grid-btn active" onclick="setOhpGridCols(3)">Standart (3x3)</button>
+                    <button class="ohp-grid-btn" onclick="setOhpGridCols(2)">Büyük (2x2)</button>
+                </div>
+            </div>
+            <div class="ohp-grid cols-${currentOhpGridCols}" id="ohp-card-grid">
+        `;
         for (const key of Object.keys(OHP_CHANNEL_LABELS)) {
             html += `
                 <div class="ohp-card">
-                    <div class="ohp-card-title">${OHP_CHANNEL_LABELS[key]}</div>
+                    <div class="ohp-card-title">
+                        <span>${OHP_CHANNEL_LABELS[key]}</span>
+                        <button class="ohp-expand-btn" onclick="openOhpModal('${key}')" title="Büyüt / İstatistikler">⛶ Büyüt</button>
+                    </div>
                     <canvas id="ohp-canvas-${key}"></canvas>
                 </div>
             `;
         }
+        html += `</div>`;
         container.innerHTML = html;
         container.dataset.built = '1';
     }
@@ -4571,6 +4898,35 @@ function renderOhpGrid() {
         const canvas = document.getElementById(`ohp-canvas-${key}`);
         if (canvas) drawOhpMiniPlot(canvas, dataBuffers.ohp_series[key] || []);
     }
+
+    if (activeOhpModalKey) {
+        updateOhpModalPlot();
+    }
+}
+
+function updateOhpModalPlot() {
+    if (!activeOhpModalKey) return;
+    const canvas = document.getElementById('ohp-modal-canvas');
+    if (!canvas) return;
+    
+    const series = dataBuffers.ohp_series[activeOhpModalKey] || [];
+    drawOhpMiniPlot(canvas, series);
+
+    // Calculate ROOT Statistics
+    const vals = series.map(p => p.v);
+    const n = vals.length;
+    const sum = vals.reduce((a, b) => a + b, 0);
+    const mean = n > 0 ? (sum / n) : 0;
+    const variance = n > 0 ? vals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / n : 0;
+    const stdDev = Math.sqrt(variance);
+    const maxVal = vals.length ? Math.max(...vals) : 0;
+
+    const elEnt = document.getElementById('ohp-stat-entries'); if (elEnt) elEnt.textContent = n.toLocaleString();
+    const elMean = document.getElementById('ohp-stat-mean'); if (elMean) elMean.textContent = mean.toFixed(2);
+    const elStd = document.getElementById('ohp-stat-std'); if (elStd) elStd.textContent = stdDev.toFixed(2);
+    const elRms = document.getElementById('ohp-stat-rms'); if (elRms) elRms.textContent = Math.sqrt(mean*mean + variance).toFixed(2);
+    const elIn = document.getElementById('ohp-stat-integral'); if (elIn) elIn.textContent = sum.toLocaleString();
+    const elPk = document.getElementById('ohp-stat-peak'); if (elPk) elPk.textContent = maxVal.toLocaleString();
 }
 
 function drawOhpMiniPlot(canvas, series) {
@@ -5161,6 +5517,39 @@ function prev3DGuideStep() {
             <div class="guide-btn-group">
                 <button class="btn-guide" id="guide-btn-prev" onclick="prev3DGuideStep()">◀ Back</button>
                 <button class="btn-guide primary" id="guide-btn-next" onclick="next3DGuideStep()">Next ▶</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- OHP ENLARGED HISTOGRAM MODAL -->
+<div class="ohp-modal-overlay" id="ohp-modal-overlay">
+    <div class="ohp-modal-container">
+        <div class="ohp-modal-header">
+            <div class="ohp-modal-title">
+                <span>📊</span>
+                <span id="ohp-modal-title-text">Histogram Explorer</span>
+            </div>
+            <button class="ohp-modal-close" onclick="closeOhpModal()">✕</button>
+        </div>
+        <div class="ohp-modal-body">
+            <div class="ohp-canvas-wrap">
+                <canvas id="ohp-modal-canvas" style="width:100%; height:380px; display:block;"></canvas>
+            </div>
+            <div class="ohp-modal-stats">
+                <div class="root-stat-header">ROOT Statistics</div>
+                <div class="root-stat-row"><span class="root-stat-lbl">Entries:</span><span class="root-stat-val" id="ohp-stat-entries">0</span></div>
+                <div class="root-stat-row"><span class="root-stat-lbl">Mean:</span><span class="root-stat-val" id="ohp-stat-mean">0.00</span></div>
+                <div class="root-stat-row"><span class="root-stat-lbl">Std Dev:</span><span class="root-stat-val" id="ohp-stat-std">0.00</span></div>
+                <div class="root-stat-row"><span class="root-stat-lbl">RMS:</span><span class="root-stat-val" id="ohp-stat-rms">0.00</span></div>
+                <div class="root-stat-row"><span class="root-stat-lbl">Integral:</span><span class="root-stat-val" id="ohp-stat-integral">0</span></div>
+                <div class="root-stat-row"><span class="root-stat-lbl">Peak Val:</span><span class="root-stat-val" id="ohp-stat-peak">0</span></div>
+                
+                <div class="root-stat-header" style="margin-top:12px;">Histogram Info</div>
+                <div class="root-stat-row"><span class="root-stat-lbl">Type:</span><span class="root-stat-val" style="color:#10b981;">TH1D Scaler</span></div>
+                <div class="root-stat-row"><span class="root-stat-lbl">Sampling:</span><span class="root-stat-val">500 ms</span></div>
+                <div class="root-stat-row"><span class="root-stat-lbl">Window:</span><span class="root-stat-val">Rolling 60s</span></div>
             </div>
         </div>
     </div>
