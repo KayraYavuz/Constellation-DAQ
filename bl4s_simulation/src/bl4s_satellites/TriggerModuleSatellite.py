@@ -22,7 +22,10 @@ class TriggerModuleSatellite(Satellite):
         self._s1_threshold_pe = config.get_int("s1_threshold_pe", default_value=5)
         self._s2_threshold_pe = config.get_int("s2_threshold_pe", default_value=5)
         self._readout_deadtime_ms = config.get_float("readout_deadtime_ms", default_value=3.5) # Dead-time per event
-        self._require_cherenkov_tag = config.get("require_cherenkov_tag", default_value=False)
+        self._require_cherenkov_tag = False
+        self._spill_mode = True
+        self._spill_duration_s = 0.4
+        self._spill_period_s = 10.0
         
         # Internal State & Counters
         self._trigger_id = 0

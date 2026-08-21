@@ -13,15 +13,29 @@ class Geant4ReplaySatellite(TransmitterSatellite):
     to provide realistic Landau/Gaussian physics distributions.
     
     Includes optional Kafka streaming for real-time observability.
-    """
     def do_initializing(self, config) -> None:
         self.log.info("Initializing physics replay...")
-        self._replay_file = config.get_str("replay_file", default_value="")
-        self._rate = config.get_float("rate", default_value=100.0)
-        self._channels = config.get_int("channels", default_value=16)
-        self._spill_duration_s = config.get_float("spill_duration_s", default_value=0.4)
-        self._spill_period_s = config.get_float("spill_period_s", default_value=10.0)
-        self._spill_mode = config.get("spill_mode", default_value=True)
+
+        def safe_get(key, default):
+            try:
+                if isinstance(default, float) and hasattr(config, 'get_float'):
+                    return config.get_float(key, default_value=default)
+                if isinstance(default, int) and not isinstance(default, bool) and hasattr(config, 'get_int'):
+                    return config.get_int(key, default_value=default)
+                if isinstance(default, str) and hasattr(config, 'get_str'):
+                    return config.get_str(key, default_value=default)
+                if hasattr(config, 'get'):
+                    return config.get(key, default_value=default)
+            except Exception:
+                pass
+            return default
+
+        self._replay_file = safe_get("replay_file", "")
+        self._rate = safe_get("rate", 100.0)
+        self._channels = safe_get("channels", 16)
+        self._spill_duration_s = safe_get("spill_duration_s", 0.4)
+        self._spill_period_s = safe_get("spill_period_s", 10.0)
+        self._spill_mode = safe_get("spill_mode", True)
         
         if self._replay_file and os.path.exists(self._replay_file):
             self.log.info(f"Replaying data from {self._replay_file}")
