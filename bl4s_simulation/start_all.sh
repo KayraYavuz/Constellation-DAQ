@@ -4,6 +4,7 @@
 echo "[0/5] Eski uydular ve DAQ süreçleri temizleniyor..."
 pkill -9 -f "bl4s_satellites" 2>/dev/null || true
 pkill -9 -f "SatelliteH5DataWriter" 2>/dev/null || true
+pkill -9 -f "bl4s_event_explorer_server" 2>/dev/null || true
 
 # 1.5. Eski verileri arşive taşıyalım (Aynı run ID ile çakışma olmaması için)
 echo "[1/5] Eski veriler arşive (eski_veriler) taşınıyor..."
@@ -34,6 +35,15 @@ nohup python3 src/bl4s_satellites/PhysicsReconstructionSatellite.py -g bl4s > ph
 nohup python3 src/bl4s_satellites/MachineLearningSatellite.py -g bl4s > ml_pid.log 2>&1 &
 nohup python3 src/bl4s_satellites/SlowControlSatellite.py -g bl4s > slow_control.log 2>&1 &
 nohup python3 src/bl4s_satellites/PrometheusExporter.py -g bl4s > prometheus.log 2>&1 &
+
+# Live Event Explorer Web Backend & Kafka Otomatik Başlatma
+if [ -f "docker-compose-kafka.yml" ]; then
+    docker compose -f docker-compose-kafka.yml up -d 2>/dev/null || docker-compose -f docker-compose-kafka.yml up -d 2>/dev/null || true
+fi
+if [ -f "bl4s_event_explorer_server.py" ]; then
+    nohup python3 bl4s_event_explorer_server.py > event_explorer.log 2>&1 &
+    echo "  -> Live Event Explorer Backend http://localhost:5050 adresinde başlatıldı!"
+fi
 
 # Python ortamından çıkıyoruz
 deactivate
