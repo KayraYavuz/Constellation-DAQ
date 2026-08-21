@@ -2,8 +2,8 @@
 
 # 1. Eski süreçleri temizleyelim (çakışma olmaması için)
 echo "[0/5] Eski uydular ve DAQ süreçleri temizleniyor..."
-pkill -f "bl4s_satellites"
-pkill -f "SatelliteH5DataWriter"
+pkill -9 -f "bl4s_satellites" 2>/dev/null || true
+pkill -9 -f "SatelliteH5DataWriter" 2>/dev/null || true
 
 # 1.5. Eski verileri arşive taşıyalım (Aynı run ID ile çakışma olmaması için)
 echo "[1/5] Eski veriler arşive (eski_veriler) taşınıyor..."
