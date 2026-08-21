@@ -9,18 +9,24 @@ class PrometheusExporter(Satellite):
     def do_initializing(self, config: Configuration) -> None:
         self.metrics_port = config.get_int("metrics_port", default_value=9100)
         
-        # --- MORE DETAILED METRICS ---
-        self.event_counter = Counter('constellation_events_total', 'Total number of events processed')
-        self.data_volume = Counter('constellation_data_bytes_total', 'Total bytes of data generated')
-        
-        self.temperature_gauge = Gauge('constellation_detector_temperature_celsius', 'Detector temperature', ['detector'])
-        self.hv_gauge = Gauge('constellation_detector_high_voltage', 'Detector High Voltage (V)', ['detector'])
-        self.cpu_load = Gauge('constellation_system_cpu_load_percent', 'Simulated CPU Load (%)')
-        self.active_channels = Gauge('constellation_active_channels', 'Number of active detector channels', ['detector'])
-        
-        self.event_size_hist = Histogram('constellation_event_size_bytes', 'Size of events in bytes', buckets=(64, 128, 256, 512, 1024, 2048))
-        
-        start_http_server(self.metrics_port)
+        if not hasattr(self, '_initialized_metrics'):
+            # --- MORE DETAILED METRICS ---
+            self.event_counter = Counter('constellation_events_total', 'Total number of events processed')
+            self.data_volume = Counter('constellation_data_bytes_total', 'Total bytes of data generated')
+            
+            self.temperature_gauge = Gauge('constellation_detector_temperature_celsius', 'Detector temperature', ['detector'])
+            self.hv_gauge = Gauge('constellation_detector_high_voltage', 'Detector High Voltage (V)', ['detector'])
+            self.cpu_load = Gauge('constellation_system_cpu_load_percent', 'Simulated CPU Load (%)')
+            self.active_channels = Gauge('constellation_active_channels', 'Number of active detector channels', ['detector'])
+            
+            self.event_size_hist = Histogram('constellation_event_size_bytes', 'Size of events in bytes', buckets=(64, 128, 256, 512, 1024, 2048))
+            
+            try:
+                start_http_server(self.metrics_port)
+            except Exception as e:
+                self.log.warning(f"HTTP server already running or port busy: {e}")
+            self._initialized_metrics = True
+            
         self.log.info(f"Prometheus Exporter initialized. Metrics available at http://localhost:{self.metrics_port}/metrics")
 
     def do_starting(self, run_identifier: str) -> str:
