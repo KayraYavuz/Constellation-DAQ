@@ -94,11 +94,11 @@ class Geant4ReplaySatellite(TransmitterSatellite):
         Main loop to transmit data over Constellation ZMQ.
         """
         from constellation.core.message.cdtp2 import DataRecord
-        from datetime import datetime, UTC
+        from datetime import datetime, timezone
         
         while not self.stop_requested():
             self._event_number += 1
-            record = DataRecord(sequence_number=self._event_number, tags={"timestamp": str(datetime.now(UTC))})
+            record = DataRecord(sequence_number=self._event_number, tags={"timestamp": str(datetime.now(timezone.utc))})
             
             if self._mode == "generate":
                 payload_bytes = self.generate_physics_event()
