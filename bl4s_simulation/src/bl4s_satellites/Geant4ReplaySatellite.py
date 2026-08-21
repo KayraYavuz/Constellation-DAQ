@@ -13,6 +13,7 @@ class Geant4ReplaySatellite(TransmitterSatellite):
     to provide realistic Landau/Gaussian physics distributions.
     
     Includes optional Kafka streaming for real-time observability.
+    """
     def do_initializing(self, config) -> None:
         self.log.info("Initializing physics replay...")
 
