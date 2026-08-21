@@ -21,7 +21,7 @@ class Geant4ReplaySatellite(TransmitterSatellite):
         self._channels = config.get_int("channels", default_value=16)
         self._spill_duration_s = config.get_float("spill_duration_s", default_value=0.4)
         self._spill_period_s = config.get_float("spill_period_s", default_value=10.0)
-        self._spill_mode = config.get_bool("spill_mode", default_value=True)
+        self._spill_mode = config.get("spill_mode", default_value=True)
         
         if self._replay_file and os.path.exists(self._replay_file):
             self.log.info(f"Replaying data from {self._replay_file}")
