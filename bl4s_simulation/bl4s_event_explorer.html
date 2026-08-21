@@ -1802,8 +1802,12 @@
             </button>
         </div>
         <div class="stats">
+            <div class="stat-item" style="display:flex; align-items:center; gap:6px;">
+                <span>Beamline:</span>
+                <span class="stat-value" id="beamStatusBadge" style="padding:3px 10px; border-radius:12px; font-weight:700; font-size:11px; background:rgba(30,41,59,0.8); color:#94a3b8; border:1px solid #334155; transition: all 0.3s ease;">○ BEAM STANDBY</span>
+            </div>
             <div class="stat-item">
-                <span>Rate:</span>
+                <span>Instant Rate:</span>
                 <span class="stat-value" id="eventsPerSec">0 ev/s</span>
             </div>
             <div class="stat-item">
@@ -3276,6 +3280,68 @@ function createHistogramChart(chart, viewId) {
             animationDurationUpdate: 80
         }]
     });
+let tdaqRateHistory = Array(30).fill(0);
+let tdaqTimeHistory = Array(30).fill('');
+
+function createTdaqRateChart(chart) {
+    chart.setOption({
+        backgroundColor: 'transparent',
+        title: {
+            text: '⚡ L1 Trigger & Particle Instantaneous Extraction Rate (CERN T9)',
+            textStyle: { color: '#38bdf8', fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 'bold' },
+            left: 8, top: 4
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'cross', lineStyle: { color: 'rgba(56,189,248,0.5)' } },
+            backgroundColor: 'rgba(15, 23, 42, 0.94)',
+            borderColor: '#38bdf8',
+            borderWidth: 1,
+            textStyle: { color: '#f8fafc', fontFamily: 'JetBrains Mono', fontSize: 11 },
+            formatter: (params) => {
+                let p = params[0];
+                let isSpill = Number(p.value) > 20;
+                let status = isSpill ? '<span style="color:#10b981;font-weight:bold;">● BEAM ON (Spill Active)</span>' : '<span style="color:#f59e0b;">○ BEAM OFF (Inter-Spill: 9.6s)</span>';
+                return `Time: <strong>${p.name}</strong><br/>Rate: <strong>${p.value} Hz</strong><br/>State: ${status}`;
+            }
+        },
+        grid: { top: 32, right: 15, bottom: 22, left: 48 },
+        xAxis: {
+            type: 'category',
+            data: tdaqTimeHistory,
+            axisLabel: { color: '#94a3b8', fontFamily: 'JetBrains Mono', fontSize: 9 },
+            axisLine: { lineStyle: { color: '#334155' } }
+        },
+        yAxis: {
+            name: 'Rate (Hz)',
+            nameTextStyle: { color: '#94a3b8', fontSize: 9 },
+            type: 'value',
+            min: 0,
+            splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+            axisLabel: { color: '#94a3b8', fontFamily: 'JetBrains Mono', fontSize: 9 }
+        },
+        series: [{
+            name: 'Instantaneous Rate',
+            data: tdaqRateHistory,
+            type: 'line',
+            smooth: 0.15,
+            showSymbol: false,
+            itemStyle: { color: '#38bdf8' },
+            lineStyle: { width: 2, color: '#38bdf8' },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(56, 189, 248, 0.55)' },
+                    { offset: 1, color: 'rgba(56, 189, 248, 0.02)' }
+                ])
+            },
+            markLine: {
+                silent: true,
+                symbol: 'none',
+                lineStyle: { type: 'dashed', color: '#10b981', width: 1 },
+                data: [{ yAxis: 400, label: { formatter: 'Target Extraction (400 Hz)', color: '#10b981', fontFamily: 'JetBrains Mono', fontSize: 9 } }]
+            }
+        }]
+    });
 }
 
 function createTimeSeriesChart(chart, viewId) {
@@ -4720,10 +4786,49 @@ function updateAllPanels() {
         }
     }
 
-    // Top Bar Update
+    // Top Bar & Beamline Spill State Update
     const now = Date.now();
     if (now - lastSecondTimestamp >= 1000) {
-        document.getElementById('eventsPerSec').textContent = `${eventCountThisSecond.toLocaleString()} ev/s`;
+        const rate = eventCountThisSecond;
+        document.getElementById('eventsPerSec').textContent = `${rate.toLocaleString()} ev/s`;
+        
+        // Update Beamline extraction badge
+        const beamBadge = document.getElementById('beamStatusBadge');
+        if (beamBadge) {
+            if (rate > 15) {
+                beamBadge.innerHTML = '● BEAM ON <span style="font-size:9px;opacity:0.85;">(400ms Spill)</span>';
+                beamBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+                beamBadge.style.color = '#10b981';
+                beamBadge.style.borderColor = '#10b981';
+                beamBadge.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.45)';
+            } else {
+                beamBadge.innerHTML = '○ INTER-SPILL <span style="font-size:9px;opacity:0.85;">(9.6s Gap)</span>';
+                beamBadge.style.background = 'rgba(245, 158, 11, 0.12)';
+                beamBadge.style.color = '#f59e0b';
+                beamBadge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+                beamBadge.style.boxShadow = 'none';
+            }
+        }
+        
+        // Push to TDAQ Rate waveform history
+        tdaqRateHistory.push(rate);
+        tdaqRateHistory.shift();
+        const timeStr = new Date().toLocaleTimeString().split(' ')[0];
+        tdaqTimeHistory.push(timeStr);
+        tdaqTimeHistory.shift();
+        
+        // Update active TDAQ Run Control charts if open
+        for (const [vId, p] of Object.entries(activePanels)) {
+            if (p.chartType === 'run_control_console' && p.chart && p.chart.chart) {
+                p.chart.chart.setOption({
+                    xAxis: { data: tdaqTimeHistory },
+                    series: [{ data: tdaqRateHistory }]
+                });
+                const rateValEl = document.getElementById('tdaq-val-rate');
+                if (rateValEl) rateValEl.textContent = `${rate} Hz`;
+            }
+        }
+        
         eventCountThisSecond = 0;
         lastSecondTimestamp = now;
     }

@@ -19,12 +19,15 @@ class Geant4ReplaySatellite(TransmitterSatellite):
         self._replay_file = config.get_str("replay_file", default_value="")
         self._rate = config.get_float("rate", default_value=100.0)
         self._channels = config.get_int("channels", default_value=16)
+        self._spill_duration_s = config.get_float("spill_duration_s", default_value=0.4)
+        self._spill_period_s = config.get_float("spill_period_s", default_value=10.0)
+        self._spill_mode = config.get_bool("spill_mode", default_value=True)
         
         if self._replay_file and os.path.exists(self._replay_file):
             self.log.info(f"Replaying data from {self._replay_file}")
             self._mode = "file"
         else:
-            self.log.info("No replay file found. Generating realistic physics models on the fly.")
+            self.log.info(f"Generating realistic physics models on the fly (Spill mode: {self._spill_mode}, Cycle: {self._spill_period_s}s, Spill: {self._spill_duration_s}s)")
             self._mode = "generate"
         
         # --- Kafka Live Streaming (Optional) ---
@@ -91,16 +94,28 @@ class Geant4ReplaySatellite(TransmitterSatellite):
 
     def do_run(self) -> str:
         """
-        Main loop to transmit data over Constellation ZMQ.
+        Main loop to transmit data over Constellation ZMQ and stream to Kafka.
+        Adheres to CERN PS T9 beam extraction supercycle (0.4s beam-on / 9.6s beam-off).
         """
         from constellation.core.message.cdtp2 import DataRecord
         from datetime import datetime, timezone
         
         while not self.stop_requested():
+            now = time.time()
+            
+            # Check beam extraction supercycle
+            if self._spill_mode:
+                cycle_pos = now % self._spill_period_s
+                if cycle_pos > self._spill_duration_s:
+                    # Off-spill (Inter-spill gap: 9.6s). Sleep briefly and loop.
+                    time.sleep(0.04)
+                    continue
+            
+            # In-spill (Beam ON: 0.4s burst): Generate event
             self._event_number += 1
             record = DataRecord(sequence_number=self._event_number, tags={"timestamp": str(datetime.now(timezone.utc))})
             
-            if self._mode == "generate":
+            if self._mode == "file":
                 payload_bytes = self.generate_physics_event()
             else:
                 payload_bytes = self.generate_physics_event()
@@ -112,7 +127,7 @@ class Geant4ReplaySatellite(TransmitterSatellite):
             kafka_events = self.decode_event_for_kafka(payload_bytes)
             self._send_to_kafka(kafka_events)
             
-            # Rate limiting
-            time.sleep(1.0 / self._rate)
+            # In-spill high rate limiting
+            time.sleep(1.0 / max(self._rate, 10.0))
             
         return "Finished run"

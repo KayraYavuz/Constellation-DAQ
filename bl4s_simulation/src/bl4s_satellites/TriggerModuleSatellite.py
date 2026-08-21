@@ -30,43 +30,34 @@ class TriggerModuleSatellite(Satellite):
         self._coincidence_matches = 0
         self._vetoed_busy_triggers = 0
         self._accepted_triggers = 0
-        
+        self._vetoed_busy_triggers = 0
         self._is_busy = False
         self._busy_until = 0.0
-        
-        # Register Constellation telemetry metrics
-        if hasattr(self, "_mnt") and self._mnt:
-            self._mnt.register_metric("SWTRIG", "", "Accepted Trigger ID")
-            self._mnt.register_metric("DEAD_TIME_PCT", "%", "DAQ Dead Time Percentage")
-            self._mnt.register_metric("IS_BUSY", "bool", "Control Board Readout Busy Flag")
+        self._last_telemetry_time = 0.0
 
-        self.log.info(
-            f"Trigger Control Board initialized (Coincidence: +- {self._coincidence_window_ns}ns, "
-            f"Dead-Time: {self._readout_deadtime_ms}ms, CherenkovTag: {self._require_cherenkov_tag})"
-        )
-
-        # --- Kafka Streaming for Live Telemetry ---
+        # Optional Kafka telemetry
         self._kafka_producer = None
         self._kafka_topic = "bl4s_events"
-        self._last_telemetry_time = time.time()
         self._init_kafka()
+
+        self.log.info(f"Trigger Module initialized (Coincidence window: ±{self._coincidence_window_ns}ns, Dead-time: {self._readout_deadtime_ms}ms, Spill mode: {self._spill_mode})")
 
     def _init_kafka(self):
         try:
             from kafka import KafkaProducer
             self._kafka_producer = KafkaProducer(
                 bootstrap_servers=['localhost:9092'],
-                value_serializer=lambda x: json.dumps(x).encode('utf-8'),
+                value_serializer=lambda v: json.dumps(v).encode('utf-8'),
                 request_timeout_ms=500,
                 max_block_ms=200
             )
-            self.log.info("Trigger Control Board Kafka streaming ENABLED on localhost:9092")
         except Exception:
             self._kafka_producer = None
 
     def evaluate_trigger_logic(self) -> Dict[str, Any]:
         """
         Simulates hardware discriminator pulses, coincidence AND gate, and BUSY veto inhibit.
+        Synchronized with CERN PS T9 beam extraction supercycle (0.4s spill / 9.6s inter-spill).
         """
         now = time.time()
         self._raw_events += 1
@@ -75,8 +66,14 @@ class TriggerModuleSatellite(Satellite):
         if self._is_busy and now >= self._busy_until:
             self._is_busy = False
 
-        # 2. Simulate Scintillator Pulses (Photo-electrons & TDC timings)
-        has_particle = random.random() < 0.85
+        # 2. Check Beam Extraction Cycle
+        is_in_spill = True
+        if self._spill_mode:
+            cycle_pos = now % self._spill_period_s
+            is_in_spill = cycle_pos <= self._spill_duration_s
+
+        # 3. Simulate Scintillator Pulses (Photo-electrons & TDC timings)
+        has_particle = (random.random() < 0.92) if is_in_spill else (random.random() < 0.01)
         if has_particle:
             s1_pe = np.random.poisson(32)
             s2_pe = np.random.poisson(30)
@@ -141,6 +138,7 @@ class TriggerModuleSatellite(Satellite):
             "total_coincidences": self._coincidence_matches,
             "total_vetoed_busy": self._vetoed_busy_triggers,
             "total_accepted": self._accepted_triggers,
+            "is_in_spill": is_in_spill,
             "timestamp": now
         }
 

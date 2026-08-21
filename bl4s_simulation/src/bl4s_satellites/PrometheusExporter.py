@@ -46,8 +46,15 @@ class PrometheusExporter(Satellite):
         
         while not self.stop_requested():
             time.sleep(1.0)
+            now = time.time()
+            cycle_pos = now % 10.0
+            is_in_spill = cycle_pos <= 1.0  # 1-sec sampling window covers the 0.4s beam spill burst
             
-            events_in_second = random.randint(85, 115)
+            if is_in_spill:
+                events_in_second = random.randint(450, 600)  # High-rate burst during extraction
+            else:
+                events_in_second = random.randint(0, 3)     # Baseline cosmic/pedestal noise
+                
             self.event_counter.inc(events_in_second)
             
             # Simulate data volume (approx 128 bytes per event)
@@ -55,8 +62,9 @@ class PrometheusExporter(Satellite):
             self.data_volume.inc(bytes_in_second)
             
             # Observe some event sizes
-            for _ in range(10):
-                self.event_size_hist.observe(random.gauss(128, 20))
+            if events_in_second > 0:
+                for _ in range(min(events_in_second, 10)):
+                    self.event_size_hist.observe(random.gauss(128, 20))
             
             # Fluctuate environment metrics slightly per detector
             for det in base_hv:
