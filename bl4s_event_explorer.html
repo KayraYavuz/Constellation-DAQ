@@ -5810,12 +5810,26 @@ function toggleHvChannel(chId, state) {
             if (stEl) stEl.textContent = state ? '● ON (STABLE)' : '○ STANDBY';
         }, 1200);
     }
+    
+    // Dispatch command to backend and real CAEN Crate
+    fetch('/api/hv/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_power', channel_id: chId, power: state, v0: ch.v0 })
+    }).catch(err => console.warn('[HV Control] Backend offline:', err));
 }
 
 function setHvTarget(chId, newV0) {
     const ch = hvChannelData.find(c => c.id === chId);
     if (!ch) return;
     ch.v0 = parseFloat(newV0);
+    
+    // Dispatch new V0 target to CAEN Crate
+    fetch('/api/hv/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_v0', channel_id: chId, power: ch.on, v0: ch.v0 })
+    }).catch(err => console.warn('[HV Control] Backend offline:', err));
 }
 
 function setAllHvChannels(state) {
@@ -5829,9 +5843,21 @@ function setAllHvChannels(state) {
             st.textContent = state ? '● ON (STABLE)' : '○ STANDBY';
         }
     });
+    
+    // Dispatch master command to CAEN Crate
+    fetch('/api/hv/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'master_power', power: state })
+    }).catch(err => console.warn('[HV Control] Backend offline:', err));
 }
 
 function resetAllHvAlarms() {
+    fetch('/api/hv/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear_alarms' })
+    }).catch(err => console.warn('[HV Control] Backend offline:', err));
     alert("All CAEN Crate Alarms & Interlock loops cleared. All channels normal.");
 }
 

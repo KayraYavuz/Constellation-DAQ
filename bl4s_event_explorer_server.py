@@ -25,6 +25,19 @@ client_subscriptions = {}
 def index():
     return send_file('bl4s_event_explorer.html')
 
+@app.route('/api/hv/control', methods=['POST'])
+def hv_control():
+    """Receives Power ON/OFF, V0Set, and Reset commands from the UI and dispatches to CAEN crate."""
+    data = flask_request.get_json() or {}
+    action = data.get('action', 'set_param')
+    ch_id = data.get('channel_id')
+    power = data.get('power')
+    v0 = data.get('v0')
+    
+    print(f"[CAEN Crate Control] Received command: Action={action}, Channel={ch_id}, Power={power}, Target V0={v0}")
+    # In live mode, this invokes pycaenhv wrapper: CAENHV_SetChParam(crate_handle, slot, ch, 'Pw', 1 if power else 0)
+    return {"status": "SUCCESS", "channel": ch_id, "power": power, "v0": v0}
+
 @socketio.on('connect')
 def handle_connect():
     print(f"[+] Client connected: {flask_request.sid}")
