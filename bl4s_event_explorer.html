@@ -2490,7 +2490,8 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                 <div class="geco-main">
                     <div class="geco-header-bar">
                         <span>System</span>
-                        <span>MultiChannel High Voltage System</span>
+                        <span style="color:#fbbf24; background:#78350f; padding:2px 6px; border-radius:2px; margin-left:10px; font-size:9px; border:1px solid #b45309;">SIMULATION MODE (NO HARDWARE IP)</span>
+                        <span style="flex:1; text-align:right;">MultiChannel High Voltage System</span>
                     </div>
                     <div style="flex:1; overflow-y:auto;">
                         <table class="geco-table" id="geco-table-${viewId}">
@@ -4887,7 +4888,7 @@ function renderOhpGrid() {
                 <div class="ohp-grid-btn-group">
                     <button class="ohp-grid-btn" onclick="setOhpGridCols(4)">Kompakt (4x4)</button>
                     <button class="ohp-grid-btn active" onclick="setOhpGridCols(3)">Standart (3x3)</button>
-                    <button class="ohp-grid-btn" onclick="setOhpGridCols(2)">Büyük (2x2)</button>
+                    <button class="ohp-grid-btn" onclick="setOhpGridCols(2)">Large (2x2)</button>
                 </div>
             </div>
             <div class="ohp-grid cols-${currentOhpGridCols}" id="ohp-card-grid">
@@ -4897,7 +4898,7 @@ function renderOhpGrid() {
                 <div class="ohp-card">
                     <div class="ohp-card-title">
                         <span>${OHP_CHANNEL_LABELS[key]}</span>
-                        <button class="ohp-expand-btn" onclick="openOhpModal('${key}')" title="Büyüt / İstatistikler">⛶ Büyüt</button>
+                        <button class="ohp-expand-btn" onclick="openOhpModal('${key}')" title="Expand / Stats">⛶ Expand</button>
                     </div>
                     <canvas id="ohp-canvas-${key}"></canvas>
                 </div>
