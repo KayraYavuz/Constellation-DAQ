@@ -5,19 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CERN BL4S — Modular Event Explorer & Beamline DAQ</title>
     <!-- Socket.IO & Apache ECharts -->
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js">
+</script>
     <!-- Three.js & OrbitControls for 3D Event Display -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js">
+</script>
     <!-- Post-processing (bloom glow) & real-time floor reflections for photorealistic rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Reflector.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Reflector.js">
+</script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1554,11 +1565,42 @@
         .coinc-stat-lbl { color: #94a3b8; font-size: 10px; }
         .coinc-stat-val { font-weight: 700; color: #10b981; font-size: 14px; }
 
-    </style>
+    
+        /* ================= MODERN DFP PANEL & TERMINAL ================= */
+        .modern-tdaq-wrap {
+            height: 100%; display: flex; flex-direction: column;
+            background: rgba(15, 23, 42, 0.4); border-radius: 8px; color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.05); font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        .modern-stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; padding: 16px;
+        }
+        .modern-stat-card {
+            background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .modern-stat-lbl { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .modern-stat-val { color: #f8fafc; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        
+        .terminal-container {
+            flex: 1; background: #000; color: #10b981; font-family: 'JetBrains Mono', monospace;
+            font-size: 12px; padding: 10px; overflow-y: auto; border-top: 1px solid #333;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        .terminal-line { margin-bottom: 4px; line-height: 1.4; word-wrap: break-word; }
+        .term-ts { color: #64748b; margin-right: 8px; }
+        .term-src { color: #f43f5e; margin-right: 8px; font-weight: bold; }
+        .term-msg { color: #e2e8f0; }
+        .term-data { color: #38bdf8; }
+
+</style>
 
     <!-- Intro.js for Interactive Tutorial -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js">
+</script>
 
     <!-- App Configuration (Dynamic Overrides) -->
     <script>
@@ -1569,7 +1611,8 @@
             physicsMode: "PI0_DECAY",
             allowFullscreen: true
         };
-    </script>
+    
+</script>
 
 </head>
 <body>
@@ -1593,13 +1636,13 @@
     <div class="tree-container">
         <div class="tree-root" id="treeRoot">
 
-            <!-- 🔬 Physics & 3D Reconstruction -->
+            <!--  Physics & 3D Reconstruction -->
             <div class="tree-category-title">3D & Physics Reconstruction</div>
 
             <div class="tree-sat">
                 <div class="tree-sat-header expanded" onclick="toggleSat(this)">
                     <span>Event Displays & Invariant Mass</span>
-                    <span class="chevron">▶</span>
+                    <span class="chevron"></span>
                 </div>
                 <div class="tree-children open">
                     <div class="tree-view-item" onclick="openPanel('beamline_3d', 'Physics', '3D Interactive Beamline (π⁰ → γγ Dual Shower)', 'three_3d', true)" data-view="beamline_3d">
@@ -1624,21 +1667,22 @@
                     </div>
                     
 
-                    <div class="tree-view-item" onclick="openPanel('slow_control_view', 'Slow Control', '🌡️ Slow Control & Hardware Telemetry', 'slow_control', true)" data-view="slow_control_view">
-                        <span>🌡️ Slow Control & Hardware</span>
-                        <span class="badge-tag" style="background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid #f59e0b;">EPICS</span>
+                    
+                    <div class="tree-view-item" onclick="openPanel('dfp_panel', 'TDAQ System', 'DFP Panel & Network', 'dfp_panel', true)" data-view="dfp_panel">
+                        <span>DFP Panel</span>
+                        <span class="badge-tag highlight" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid #38bdf8;">DFP</span>
                     </div>
-                    <div class="tree-view-item" onclick="openPanel('run_control_console', 'TDAQ System', '🎛️ DAQ Run Control & Partition Manager', 'run_control_console', true)" data-view="run_control_console">
-                        <span>🎛️ DAQ Run Control</span>
-                        <span class="badge-tag highlight" style="background:rgba(244,63,94,0.2);color:#f43f5e;border:1px solid #f43f5e;">RC</span>
+                    <div class="tree-view-item" onclick="openPanel('live_event_feed', 'TDAQ System', 'Live Event Feed (Kafka)', 'live_event_feed', true)" data-view="live_event_feed">
+                        <span>Live Event Feed</span>
+                        <span class="badge-tag highlight" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid #10b981;">LOG</span>
                     </div>
-<div class="tree-view-item" onclick="openPanel('coincidence_view', 'TDAQ System', '⏱️ Coincidence Timing Window & Noise Rejection', 'coincidence_view', true)" data-view="coincidence_view">
-                        <span>⏱️ Coincidence Window (±10ns)</span>
+<div class="tree-view-item" onclick="openPanel('coincidence_view', 'TDAQ System', 'Coincidence Timing Window & Noise Rejection', 'coincidence_view', true)" data-view="coincidence_view">
+                        <span>Coincidence Window (±10ns)</span>
                         <span class="badge-tag" style="background:rgba(16,185,129,0.2);color:#10b981;border:1px solid #10b981;">TDAQ</span>
                     </div>
 
-                    <div class="tree-view-item" onclick="openPanel('ohp_grid', 'TDAQ System', '📊 Online Histogram Presenter — Scaler Grid', 'ohp_view', true)" data-view="ohp_grid">
-                        <span>📊 Online Histogram Presenter</span>
+                    <div class="tree-view-item" onclick="openPanel('ohp_grid', 'TDAQ System', 'Online Histogram Presenter — Scaler Grid', 'ohp_view', true)" data-view="ohp_grid">
+                        <span>Online Histogram Presenter</span>
                         <span class="badge-tag highlight" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid #38bdf8;">OHP</span>
                     </div>
 
@@ -1656,7 +1700,7 @@
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Calorimeter">
                     <span>CalorimeterSatellite</span>
-                    <span class="chevron">▶</span>
+                    <span class="chevron"></span>
                 </div>
                 <div class="tree-children">
                     <div class="tree-view-item" onclick="openPanel('calorimeter_energy', 'Calorimeter', 'Energy Histogram (16 ch ADC)', 'bar')" data-view="calorimeter_energy">
@@ -1672,7 +1716,7 @@
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Scintillator">
                     <span>ScintillatorSatellite</span>
-                    <span class="chevron">▶</span>
+                    <span class="chevron"></span>
                 </div>
                 <div class="tree-children">
                     <div class="tree-view-item" onclick="openPanel('scintillator_timing', 'Scintillator', 'TDC Timing Distribution (ns)', 'histogram')" data-view="scintillator_timing">
@@ -1688,7 +1732,7 @@
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="DWC">
                     <span>DWCSatellite</span>
-                    <span class="chevron">▶</span>
+                    <span class="chevron"></span>
                 </div>
                 <div class="tree-children">
                     <div class="tree-view-item" onclick="openPanel('dwc_hitmap', 'DWC', 'DWC Beam Profile (100×100mm)', 'heatmap2d_dwc')" data-view="dwc_hitmap">
@@ -1705,7 +1749,7 @@
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Timepix">
                     <span>TimepixSatellite</span>
-                    <span class="chevron">▶</span>
+                    <span class="chevron"></span>
                 </div>
                 <div class="tree-children">
                     <div class="tree-view-item" onclick="openPanel('timepix_hitmap', 'Timepix', 'Pixel Hit Matrix (256×256)', 'heatmap2d')" data-view="timepix_hitmap">
@@ -1721,7 +1765,7 @@
             <div class="tree-sat">
                 <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Cherenkov">
                     <span>CherenkovSatellite</span>
-                    <span class="chevron">▶</span>
+                    <span class="chevron"></span>
                 </div>
                 <div class="tree-children">
                     <div class="tree-view-item" onclick="openPanel('cherenkov_qdc', 'Cherenkov', 'Cherenkov QDC Spectrum', 'histogram')" data-view="cherenkov_qdc">
@@ -1730,18 +1774,7 @@
                 </div>
             </div>
 
-            <!-- Trigger -->
-            <div class="tree-sat">
-                <div class="tree-sat-header" onclick="toggleSat(this)" data-sat="Trigger">
-                    <span>TriggerModule</span>
-                    <span class="chevron">▶</span>
-                </div>
-                <div class="tree-children">
-                    <div class="tree-view-item" onclick="openPanel('trigger_rate', 'Trigger', 'Trigger Instantaneous Rate', 'timeseries')" data-view="trigger_rate">
-                        <span>Trigger Rate Series</span>
-                    </div>
-                </div>
-            </div>
+            
 
         </div>
     </div>
@@ -1768,9 +1801,9 @@
 
         <div class="dvr-timeline-container">
             <button class="btn-dvr" onclick="stepDvr(-10)">⏮ -10</button>
-            <button class="btn-dvr" onclick="stepDvr(-1)">◀ Step</button>
-            <button class="btn-dvr" id="btnDvrPlay" onclick="toggleDvrPlay()">▶ Play</button>
-            <button class="btn-dvr" onclick="stepDvr(1)">Step ▶</button>
+            <button class="btn-dvr" onclick="stepDvr(-1)"> Step</button>
+            <button class="btn-dvr" id="btnDvrPlay" onclick="toggleDvrPlay()">Play</button>
+            <button class="btn-dvr" onclick="stepDvr(1)">Step </button>
             <button class="btn-dvr" onclick="stepDvr(10)">+10 ⏭</button>
             <input type="range" class="dvr-slider" id="dvrSlider" min="0" max="0" value="0" oninput="seekDvr(this.value)">
             <span id="dvrFrameText" style="min-width: 80px; text-align:right;">0 / 0</span>
@@ -1785,7 +1818,7 @@
                 <option value="5.0">5.0x</option>
             </select>
             <button class="btn-dvr" onclick="returnToLiveStream()" style="border-color:#10b981; color:#10b981;">
-                <span>⚡</span> <span>Jump to Live</span>
+                <span></span> <span>Jump to Live</span>
             </button>
         </div>
     </div>
@@ -1795,10 +1828,10 @@
         <div class="controls-group">
 
             <button class="btn-run-ctrl" id="btnPauseResume" onclick="toggleStreamPause()">
-                <span id="pauseIcon">⏸</span> <span id="pauseText">Pause Stream</span>
+                <span id="pauseIcon"></span> <span id="pauseText">Pause Stream</span>
             </button>
             <button class="btn-run-ctrl" onclick="snapshotAllBuffers()">
-                <span>📸</span> <span>Take Snapshot</span>
+                <span></span> <span>Take Snapshot</span>
             </button>
         </div>
         <div class="stats">
@@ -2170,11 +2203,11 @@ function toggleStreamPause() {
 
     if (isStreamPaused) {
         btn.classList.add('active-pause');
-        icon.textContent = '▶';
+        icon.textContent = '';
         text.textContent = 'Resume Stream';
     } else {
         btn.classList.remove('active-pause');
-        icon.textContent = '⏸';
+        icon.textContent = '';
         text.textContent = 'Pause Stream';
     }
 }
@@ -2237,7 +2270,7 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                 <!-- Experiment Mission Header Banner -->
                 <div class="three-mission-banner">
                     <div class="mission-title">
-                        <span>⚛️</span>
+                        <span></span>
                         <span>CERN BL4S Modular DAQ Spectrometer</span>
                     </div>
                     <div class="mission-desc">
@@ -2281,13 +2314,13 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                     </div>
                     <div class="three-camera-presets">
                         <button class="btn-cam" onclick="set3DCameraPreset('iso')">🔭 Orbit</button>
-                        <button class="btn-cam" onclick="set3DCameraPreset('top')">📐 Top</button>
+                        <button class="btn-cam" onclick="set3DCameraPreset('top')"> Top</button>
                         <button class="btn-cam" onclick="set3DCameraPreset('side')">📏 Side</button>
-                        <button class="btn-cam" onclick="set3DCameraPreset('front')">🎯 Front</button>
+                        <button class="btn-cam" onclick="set3DCameraPreset('front')"> Front</button>
                         <button class="btn-cam highlight" id="btn-walkthrough" onclick="toggleWalkthroughTour()">🚶 Walkthrough Tour</button>
                         <button class="btn-cam" id="btn-freeroam" onclick="toggleFreeRoamMode()">✈️ Free Roam</button>
                         <button class="btn-cam" style="background:rgba(16,185,129,0.25);border-color:#10b981;color:#10b981;" onclick="toggle3DFullscreen()">⛶ Fullscreen</button>
-                        <button class="btn-cam" style="background:rgba(251,191,36,0.2);border-color:#f59e0b;color:#f59e0b;" onclick="start3DTutorial()">💡 Guide</button>
+                        <button class="btn-cam" style="background:rgba(251,191,36,0.2);border-color:#f59e0b;color:#f59e0b;" onclick="start3DTutorial()"> Guide</button>
                     </div>
                 </div>
 
@@ -2401,290 +2434,41 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
         `;
         footerButtons = `<button class="btn-action btn-green" onclick="resetBuffer('${viewId}')">Clear Histogram</button>`;
 
-        } else if (chartType === 'run_control_console') {
+        } else if (chartType === 'dfp_panel') {
         bodyContent = `
-            <div class="tdaq-console-wrap" id="tdaq-console-${viewId}">
-                <!-- Tab Navigation -->
-                <div class="tdaq-nav-tabs">
-                    <button class="tdaq-tab-btn active" onclick="switchTdaqTab('${viewId}', 'rc')">⚡ Run Control</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'segments')">🌿 Segments & Resources</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'tags')">🏷️ Dataset Tags</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'df')">🌊 DFPanel (Data Flow)</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'ers')">📜 ERS Message Log</button>
+            <div class="modern-tdaq-wrap">
+                <div class="modern-stats-grid">
+                    <div class="modern-stat-card"><span class="modern-stat-lbl">Network Bandwidth</span><span class="modern-stat-val" style="color:#38bdf8;">1.2 Gbps</span></div>
+                    <div class="modern-stat-card"><span class="modern-stat-lbl">Data Written</span><span class="modern-stat-val" style="color:#a855f7;">4.2 TB</span></div>
+                    <div class="modern-stat-card"><span class="modern-stat-lbl">Fragment Loss</span><span class="modern-stat-val" style="color:#10b981;">0.00%</span></div>
+                    <div class="modern-stat-card"><span class="modern-stat-lbl">Kafka Broker Status</span><span class="modern-stat-val" style="color:#10b981;">HEALTHY</span></div>
                 </div>
-
-                <!-- Tab 1: Run Control -->
-                <div class="tdaq-tab-content active" id="tab-${viewId}-rc">
-                    <div class="tdaq-state-bar">
-                        <div class="tdaq-state-node completed" id="st-${viewId}-initial">INITIAL</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-configured">CONFIGURED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-connected">CONNECTED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-initialized">INITIALIZED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node active-state" id="st-${viewId}-running">RUNNING</div>
-                    </div>
-
-                    <div class="tdaq-header-grid">
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Current State:</span>
-                            <span class="tdaq-header-val green" id="tdaq-val-state">RUNNING</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Run Number:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-run">#482910</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Partition Name:</span>
-                            <span class="tdaq-header-val purple">BL4S_PIONIST_2026</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Run Duration:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-duration">01:24:18</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">L1 Trigger Rate:</span>
-                            <span class="tdaq-header-val amber" id="tdaq-val-rate">420.5 Hz</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Dead Time %:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-deadtime">12.4% (Live: 87.6%)</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Accepted Events:</span>
-                            <span class="tdaq-header-val green" id="tdaq-val-events">34,812</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Trigger Logic:</span>
-                            <span class="tdaq-header-val" style="font-size:12px;color:#cbd5e1;">S1 ∧ S2 ∧ CALO_E</span>
-                        </div>
-                    </div>
-
-                    <div class="tdaq-btn-group">
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONFIGURE')">⚙️ Configure</button>
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONNECT')">🔗 Connect</button>
-                        <button class="tdaq-btn-cmd btn-start" onclick="tdaqCommand('START')">▶ Start Run</button>
-                        <button class="tdaq-btn-cmd btn-pause" onclick="tdaqCommand('PAUSE')">⏸ Pause Run</button>
-                        <button class="tdaq-btn-cmd btn-stop" onclick="tdaqCommand('STOP')">⏹ Stop Run</button>
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('RESET')">🔄 Unconfigure / Reset</button>
-                    </div>
-
-                    <div style="flex:1; min-height:180px; width:100%; border:1px solid var(--border); border-radius:6px; background:#141822; padding:6px;">
-                        <div id="chart-tdaq-rate-${viewId}" style="width:100%; height:100%;"></div>
-                    </div>
-                </div>
-
-                <!-- Tab 2: Segments & Resources -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-segments">
-                    <table class="tdaq-table">
-                        <thead>
-                            <tr>
-                                <th>Segment / Component</th>
-                                <th>Host</th>
-                                <th>PID</th>
-                                <th>Status</th>
-                                <th>Throughput / Events</th>
-                                <th>CPU / Mem</th>
-                                <th>Control</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>ROOT_PARTITION</strong> (Master Controller)</td>
-                                <td>srv-cern-01</td>
-                                <td>14021</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
-                                <td>All Segments Active</td>
-                                <td>3.4% / 420 MB</td>
-                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
-                            </tr>
-                            <tr id="seg-row-CALO">
-                                <td>├─ <strong>CALO_SEGMENT</strong> (16ch ADC)</td>
-                                <td>pc_bl4s_01</td>
-                                <td>14032</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-CALO">RUNNING</span></td>
-                                <td>1,420 ev/s (Pb-Glass)</td>
-                                <td>4.2% / 180 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('CALO', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-TRACKING">
-                                <td>├─ <strong>TRACKING_SEGMENT</strong> (DWC + Timepix3)</td>
-                                <td>pc_bl4s_02</td>
-                                <td>14045</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-TRACKING">RUNNING</span></td>
-                                <td>850 ev/s (55µm Silicon)</td>
-                                <td>6.8% / 310 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRACKING', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-TRIGGER">
-                                <td>├─ <strong>TRIGGER_SEGMENT</strong> (CTP Board + Veto)</td>
-                                <td>pc_bl4s_03</td>
-                                <td>14051</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-TRIGGER">RUNNING</span></td>
-                                <td>DeadTime: 12.4%</td>
-                                <td>1.2% / 64 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRIGGER', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-BEAM">
-                                <td>├─ <strong>BEAM_MONITOR_SEGMENT</strong> (S1/S2 + Cherenkov)</td>
-                                <td>pc_bl4s_04</td>
-                                <td>14064</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-BEAM">RUNNING</span></td>
-                                <td>2.45 bar CO2 / Normal</td>
-                                <td>1.8% / 96 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('BEAM', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-AI">
-                                <td>├─ <strong>AI_RECON_SEGMENT</strong> (PID Engine + Pi0 Mass)</td>
-                                <td>pc_bl4s_05</td>
-                                <td>14078</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-AI">RUNNING</span></td>
-                                <td>Latency: 3.8 µs</td>
-                                <td>14.2% / 540 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('AI', this)">Inhibit</button></td>
-                            </tr>
-                            <tr>
-                                <td>└─ <strong>DATA_STORAGE_SEGMENT</strong> (Kafka + HDF5)</td>
-                                <td>pc_bl4s_06</td>
-                                <td>14090</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
-                                <td>14.8 MB/s (Disk Free: 4.8 TB)</td>
-                                <td>5.1% / 620 MB</td>
-                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Tab 3: Dataset Tags -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-tags">
-                    <table class="tdaq-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter Tag</th>
-                                <th>Configured Value</th>
-                                <th>Description / Condition</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>Beam_Momentum</code></td>
-                                <td><strong style="color:#38bdf8;">10.0 GeV/c</strong></td>
-                                <td>CERN East Area PS T9 Positively Charged Beamline</td>
-                            </tr>
-                            <tr>
-                                <td><code>Target_Material</code></td>
-                                <td><strong style="color:#c084fc;">5.0 mm Lead (Pb)</strong></td>
-                                <td>Nuclear Target for Neutral Pion Inelastic Production</td>
-                            </tr>
-                            <tr>
-                                <td><code>Cherenkov_Pressure</code></td>
-                                <td><strong style="color:#10b981;">2.451 bar (CO2)</strong></td>
-                                <td>Gas Radiator Threshold for Electron/Pion Separation</td>
-                            </tr>
-                            <tr>
-                                <td><code>Timepix3_Bias</code></td>
-                                <td><strong>-50.0 V</strong></td>
-                                <td>Silicon Reverse Bias Depletion Voltage</td>
-                            </tr>
-                            <tr>
-                                <td><code>Calorimeter_Pedestal</code></td>
-                                <td><strong>100.0 ADC Channels</strong></td>
-                                <td>16-channel baseline dark pedestal subtraction</td>
-                            </tr>
-                            <tr>
-                                <td><code>Run_Type</code></td>
-                                <td><strong style="color:#f59e0b;">Physics_Production_Pi0</strong></td>
-                                <td>Dual-Photon Invariant Mass Benchmark Run</td>
-                            </tr>
-                            <tr>
-                                <td><code>Shifter_Team</code></td>
-                                <td><strong>Team PionIST 3</strong></td>
-                                <td>BL4S CERN Finalist Collaboration</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Tab 4: DFPanel (Data Flow) -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-df">
-                    <div class="tdaq-header-grid">
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Event Builder Throughput:</span>
-                            <span class="tdaq-header-val green" id="df-val-throughput">14.8 MB/s</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Network Bandwidth:</span>
-                            <span class="tdaq-header-val">118.4 Mbps</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Fragment Loss Rate:</span>
-                            <span class="tdaq-header-val green">0.000 %</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Total Data Written:</span>
-                            <span class="tdaq-header-val purple" id="df-val-written">1.84 GB</span>
-                        </div>
-                    </div>
-                    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#94a3b8; margin-top:6px;">
-                        Data Flow Pipeline: <code>Satellites ➔ Kafka Broker (9092) ➔ Coincidence Builder ➔ HDF5 Data Storage</code>
-                    </div>
-                </div>
-
-                <!-- Tab 5: ERS Message Log -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-ers">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <div class="ohp-grid-btn-group">
-                            <button class="ohp-grid-btn active" onclick="filterErsLogs('ALL')">All Logs</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('INFO')">INFO</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('WARN')">WARN</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('ERROR')">ERROR</button>
-                        </div>
-                        <button class="tdaq-grid-btn" onclick="clearErsLogs()">🗑️ Clear Logs</button>
-                    </div>
-                    <div class="tdaq-log-box" id="tdaq-ers-log-box">
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:01]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[ROOT_CONTROLLER]</span>
-                            <span>Partition BL4S_PIONIST_2026 loaded successfully from config.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:02]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[CALO_SEGMENT]</span>
-                            <span>16 Lead-Glass channels calibrated. Pedestals mapped to 100 ADC.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:03]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[CTP_TRIGGER]</span>
-                            <span>Trigger logic active (S1 ∧ S2 coincidence gate: ±10.0 ns).</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:04]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[AI_RECON]</span>
-                            <span>Neural PID Discriminator v3.0 weights loaded into memory.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:05]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[RUN_CONTROL]</span>
-                            <span>State changed: INITIALIZED ➔ RUNNING. Run #482910 started.</span>
-                        </div>
+                <div style="flex:1; background:rgba(0,0,0,0.2); padding:20px; display:flex; flex-direction:column; gap:10px;">
+                    <div style="color:#94a3b8; font-size:12px;">Active Pipeline: Satellites -> Kafka -> Builder -> HDF5</div>
+                    <div style="color:#cbd5e1; font-size:11px; margin-top:20px;">
+                        The Machine Learning and Physics Reconstruction satellites are processing events in real-time.<br><br>
+                        They are currently analyzing synthetic collision data generated by the ML model.
                     </div>
                 </div>
             </div>
         `;
-        footerButtons = `
-            <button class="btn-action btn-green" onclick="tdaqCommand('START')">Resume/Start</button>
-            <button class="btn-action" onclick="tdaqCommand('PAUSE')">Pause</button>
+        footerButtons = ' ';
+        } else if (chartType === 'live_event_feed') {
+        bodyContent = `
+            <div class="modern-tdaq-wrap">
+                <div style="background:#1e293b; padding:8px 16px; font-size:12px; font-weight:bold; border-bottom:1px solid #334155; display:flex; justify-content:space-between;">
+                    <span>LIVE EVENT FEED</span>
+                    <span style="color:#10b981;">Connected to Kafka:9092</span>
+                </div>
+                <div class="terminal-container" id="terminal-${viewId}">
+                    <div class="terminal-line"><span class="term-ts">[SYSTEM]</span><span class="term-msg">Initializing TDAQ Live Event Feed...</span></div>
+                    <div class="terminal-line"><span class="term-ts">[SYSTEM]</span><span class="term-msg">Subscribing to topics: 'ml_recon', 'physics_trigger'...</span></div>
+                </div>
+            </div>
         `;
-
-} else if (chartType === 'dqm_view') {
+        footerButtons = ' ';
+        
+    } else if (chartType === 'dqm_view') {
         bodyContent = `<div id="dqm-container" class="dqm-grid"></div>`;
         footerButtons = `
             <button class="btn-action btn-green" onclick="exportDqmJson()">Export DQM JSON</button>
@@ -2806,9 +2590,9 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
             <div class="tdaq-console-wrap" id="tdaq-console-${viewId}">
                 <!-- Tab Navigation -->
                 <div class="tdaq-nav-tabs">
-                    <button class="tdaq-tab-btn active" onclick="switchTdaqTab('${viewId}', 'rc')">⚡ Run Control</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'segments')">🌿 Segments & Resources</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'tags')">🏷️ Dataset Tags</button>
+                    <button class="tdaq-tab-btn active" onclick="switchTdaqTab('${viewId}', 'rc')">Run Control</button>
+                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'segments')">Segments & Resources</button>
+                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'tags')">Dataset Tags</button>
                     <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'df')">🌊 DFPanel (Data Flow)</button>
                     <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'ers')">📜 ERS Message Log</button>
                 </div>
@@ -2863,12 +2647,12 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                     </div>
 
                     <div class="tdaq-btn-group">
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONFIGURE')">⚙️ Configure</button>
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONNECT')">🔗 Connect</button>
-                        <button class="tdaq-btn-cmd btn-start" onclick="tdaqCommand('START')">▶ Start Run</button>
-                        <button class="tdaq-btn-cmd btn-pause" onclick="tdaqCommand('PAUSE')">⏸ Pause Run</button>
-                        <button class="tdaq-btn-cmd btn-stop" onclick="tdaqCommand('STOP')">⏹ Stop Run</button>
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('RESET')">🔄 Unconfigure / Reset</button>
+                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONFIGURE')">Configure</button>
+                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONNECT')">Connect</button>
+                        <button class="tdaq-btn-cmd btn-start" onclick="tdaqCommand('START')">Start Run</button>
+                        <button class="tdaq-btn-cmd btn-pause" onclick="tdaqCommand('PAUSE')">Pause Run</button>
+                        <button class="tdaq-btn-cmd btn-stop" onclick="tdaqCommand('STOP')">Stop Run</button>
+                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('RESET')">Unconfigure / Reset</button>
                     </div>
 
                     <div style="flex:1; min-height:180px; width:100%; border:1px solid var(--border); border-radius:6px; background:#141822; padding:6px;">
@@ -3042,7 +2826,7 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                             <button class="ohp-grid-btn" onclick="filterErsLogs('WARN')">WARN</button>
                             <button class="ohp-grid-btn" onclick="filterErsLogs('ERROR')">ERROR</button>
                         </div>
-                        <button class="tdaq-grid-btn" onclick="clearErsLogs()">🗑️ Clear Logs</button>
+                        <button class="tdaq-grid-btn" onclick="clearErsLogs()"> Clear Logs</button>
                     </div>
                     <div class="tdaq-log-box" id="tdaq-ers-log-box">
                         <div class="tdaq-log-line">
@@ -4655,7 +4439,7 @@ function toggleWalkthroughTour() {
     const active = globalThreeState.toggleTour();
     const btn = document.getElementById('btn-walkthrough');
     if (btn) {
-        btn.textContent = active ? '⏹️ Stop Tour' : '🚶 Walkthrough Tour';
+        btn.textContent = active ? '️ Stop Tour' : '🚶 Walkthrough Tour';
         btn.classList.toggle('active', active);
     }
 }
@@ -4973,7 +4757,7 @@ function renderOhpGrid() {
         let html = `
             <div class="ohp-toolbar">
                 <div class="ohp-toolbar-title">
-                    <span>📊</span> Online Histogram Presenter — Scaler Display
+                    <span></span> Online Histogram Presenter — Scaler Display
                 </div>
                 <div class="ohp-grid-btn-group">
                     <button class="ohp-grid-btn" onclick="setOhpGridCols(4)">Kompakt (4x4)</button>
@@ -5284,7 +5068,7 @@ function toggleDvrPlay() {
     if (dvrState.recordedEvents.length === 0) return;
     dvrState.isPlaying = !dvrState.isPlaying;
     const btn = document.getElementById('btnDvrPlay');
-    if (btn) btn.textContent = dvrState.isPlaying ? '⏸ Pause' : '▶ Play';
+    if (btn) btn.textContent = dvrState.isPlaying ? 'Pause' : 'Play';
 
     if (dvrState.isPlaying) {
         dvrState.isReplayMode = true;
@@ -5481,43 +5265,43 @@ document.addEventListener('keydown', (e) => {
 // 2. BUILT-IN INTERACTIVE GUIDE TOUR (100% Pure JS & Camera Synchronization)
 const guideSteps = [
     {
-        icon: "🔬",
+        icon: "",
         title: "Welcome to the BL4S 3D Beamline Spectrometer",
         target: "all",
         body: "This interactive 3D environment represents the entire experiment setup at the CERN T9 beamline.<br><br>• <strong>Mouse Scroll:</strong> Zoom in/out deeply on any detector component.<br>• <strong>Left-Click + Drag:</strong> Rotate and orbit around the setup.<br>• <strong>Right-Click + Drag:</strong> Pan the camera.<br>• <strong>WASD / Arrow Keys:</strong> Walk and fly freely in 3D space."
     },
     {
-        icon: "⚡",
+        icon: "",
         title: "1. S1 & S2 Trigger Scintillators",
         target: "scint",
         body: "<strong>Plastic Scintillators + PMT Tubes:</strong><br>As incoming beam protons traverse S1 and S2, plastic scintillator slabs flash green. Photomultiplier tubes (PMTs) detect the light with sub-nanosecond precision to form the <strong>coincidence trigger</strong> and Time-of-Flight (ToF) measurement."
     },
     {
-        icon: "📐",
+        icon: "",
         title: "2. Delay Wire Chamber (DWC)",
         target: "dwc",
         body: "<strong>Gas Delay Wire Tracking Chamber:</strong><br>Equipped with orthogonal X and Y gold wire planes inside an active gas volume. Measures the spatial transverse coordinates (x, y) of charged particle tracks with sub-millimeter resolution."
     },
     {
-        icon: "🖲️",
+        icon: "",
         title: "3. Timepix3 Silicon Pixel Tracker",
         target: "timepix",
         body: "<strong>Hybrid Pixel Detector (256x256 pixels, 55 um pitch):</strong><br>Features a high-resistivity silicon sensor bump-bonded to a Timepix3 readout ASIC. Records Time-over-Threshold (energy loss) and Time-of-Arrival (timing) simultaneously per pixel."
     },
     {
-        icon: "🎯",
+        icon: "",
         title: "4. Nuclear Target & Anti-Coincidence Veto",
         target: "target",
         body: "<strong>Target Station & Pink Veto Counter:</strong><br>Protons collide with atomic nuclei in the target disk (p + A -> pi0 + X), producing neutral pions (pi0). The pink veto scintillator flags charged particles to isolate clean neutral decays."
     },
     {
-        icon: "💡",
+        icon: "",
         title: "5. Gas Cherenkov Detector",
         target: "cherenkov",
         body: "<strong>Threshold Particle Identification (PID):</strong><br>Particles exceeding the speed of light in the gas radiator emit a cone of ultraviolet Cherenkov radiation. A 45° parabolic mirror focuses the photons onto a high-gain PMT for electron/pion separation."
     },
     {
-        icon: "📊",
+        icon: "",
         title: "6. 4x4 Lead Glass EM Calorimeter",
         target: "calo",
         body: "<strong>16-Channel Electromagnetic Calorimeter Matrix:</strong><br>The neutral pion decays into two photons (pi0 -> gamma gamma). Each photon develops an electromagnetic shower in the lead glass crystals. 16 individual PMTs record the energy clusters, allowing full invariant mass M(gamma gamma) reconstruction."
@@ -5568,7 +5352,7 @@ function renderGuideStep(idx) {
     const prevBtn = document.getElementById('guide-btn-prev');
     if (prevBtn) prevBtn.style.visibility = idx === 0 ? 'hidden' : 'visible';
     const nextBtn = document.getElementById('guide-btn-next');
-    if (nextBtn) nextBtn.textContent = idx === guideSteps.length - 1 ? 'Finish Tour ✓' : 'Next ▶';
+    if (nextBtn) nextBtn.textContent = idx === guideSteps.length - 1 ? 'Finish Tour ✓' : 'Next ';
 
     // Synchronize 3D Camera with the guide!
     if (typeof focusOnDetector === 'function') {
@@ -5596,6 +5380,44 @@ function prev3DGuideStep() {
     }
 }
 
+
+
+// Live Event Feed Terminal Logic
+let terminalInterval = null;
+function generateTerminalLog() {
+    const satellites = ['ML_RECON', 'PHYSICS', 'TRACKING', 'CALORIMETER'];
+    const src = satellites[Math.floor(Math.random() * satellites.length)];
+    const id = Math.floor(Math.random() * 999999);
+    const size = (Math.random() * 5 + 0.5).toFixed(2);
+    
+    let color = '#38bdf8';
+    if (src === 'ML_RECON') color = '#a855f7';
+    if (src === 'PHYSICS') color = '#f59e0b';
+
+    const now = new Date();
+    let ts = "";
+    try { ts = now.toISOString().split('T')[1].slice(0, -1); } catch(e) {}
+    
+    return `<div class="terminal-line"><span class="term-ts">[${ts}]</span><span class="term-src" style="color:${color}">[${src}]</span><span class="term-msg">EventProcessed id=${id}</span> <span class="term-data">size=${size}kB</span></div>`;
+}
+
+setInterval(() => {
+    // Find all active terminal windows
+    const terminals = document.querySelectorAll('.terminal-container');
+    terminals.forEach(term => {
+        // Generate 3-8 logs per second
+        for(let i=0; i<Math.floor(Math.random()*4)+1; i++) {
+            term.insertAdjacentHTML('beforeend', generateTerminalLog());
+        }
+        // Auto-scroll to bottom
+        term.scrollTop = term.scrollHeight;
+        // Limit lines
+        if (term.childElementCount > 150) {
+            for(let i=0; i<20; i++) term.removeChild(term.firstChild);
+        }
+    });
+}, 150);
+
 </script>
 
 
@@ -5604,7 +5426,7 @@ function prev3DGuideStep() {
     <div class="guide-card">
         <div class="guide-header">
             <div class="guide-title">
-                <span id="guide-icon">💡</span>
+                <span id="guide-icon"></span>
                 <span id="guide-title-text">Welcome to BL4S 3D Event Explorer</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -5620,8 +5442,8 @@ function prev3DGuideStep() {
                 <!-- Dots generated by JS -->
             </div>
             <div class="guide-btn-group">
-                <button class="btn-guide" id="guide-btn-prev" onclick="prev3DGuideStep()">◀ Back</button>
-                <button class="btn-guide primary" id="guide-btn-next" onclick="next3DGuideStep()">Next ▶</button>
+                <button class="btn-guide" id="guide-btn-prev" onclick="prev3DGuideStep()"> Back</button>
+                <button class="btn-guide primary" id="guide-btn-next" onclick="next3DGuideStep()">Next </button>
             </div>
         </div>
     </div>
@@ -5633,7 +5455,7 @@ function prev3DGuideStep() {
     <div class="ohp-modal-container">
         <div class="ohp-modal-header">
             <div class="ohp-modal-title">
-                <span>📊</span>
+                <span></span>
                 <span id="ohp-modal-title-text">Histogram Explorer</span>
             </div>
             <button class="ohp-modal-close" onclick="closeOhpModal()">✕</button>
