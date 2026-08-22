@@ -48,3 +48,6 @@ rate = 40.0
 
 [PrometheusExporter.pc_bl4s_07]
 metrics_port = 9100
+
+[caen_hv]
+ip_address = '192.168.1.100'
