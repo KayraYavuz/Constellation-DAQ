@@ -724,6 +724,12 @@
             display: flex;
             align-items: center;
             gap: 6px;
+                .ohp-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
         .ohp-grid-btn-group {
             display: flex;
@@ -752,9 +758,10 @@
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
-            height: calc(100% - 44px);
+            flex: 1;
             overflow-y: auto;
             padding: 4px;
+            padding-right: 8px;
             align-content: start;
             transition: all 0.2s ease;
         }
@@ -768,7 +775,8 @@
             border-radius: 4px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            min-height: 180px;
+        }      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             position: relative;
         }
@@ -899,15 +907,7 @@
         .root-stat-lbl { color: #94a3b8; }
         .root-stat-val { color: #f1f5f9; font-weight: 700; }
 
-        .ohp-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 10px;
-            height: 100%;
-            overflow-y: auto;
-            padding: 4px;
-            align-content: start;
-        }
+
         .ohp-card {
             background: #f4f6f9;
             border: 1px solid #94a3b8;
@@ -2779,7 +2779,7 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
             <button class="btn-action" onclick="resetBuffer('${viewId}')">Reset</button>
         `;
     } else if (chartType === 'ohp_view') {
-        bodyContent = `<div id="ohp-container" class="ohp-grid"></div>`;
+        bodyContent = `<div id="ohp-container" class="ohp-container"></div>`;
         footerButtons = `
             <button class="btn-action" onclick="resetBuffer('${viewId}')">Clear All Scalers</button>
         `;
@@ -2814,363 +2814,6 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
     } else if (chartType === 'three_3d') {
         chart = initThree3D(document.getElementById(`three-container-${viewId}`));
     
-    } else if (chartType === 'ml_pid') {
-        bodyContent = `
-            <div class="ml-pid-container">
-                <div class="ml-card">
-                    <div class="ml-prediction-banner">
-                        <div class="ml-pred-label">Real-Time AI PID Classification</div>
-                        <div class="ml-pred-value" id="ml-pred-text">✨ Neutral Pion (π⁰ → γγ)</div>
-                        <div class="ml-confidence-pill" id="ml-conf-pill">Confidence: 98.4%</div>
-                    </div>
-                    <div style="margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#94a3b8; display:flex; justify-content:space-between;">
-                        <span>Inference Latency: <strong id="ml-latency" style="color:#38bdf8;">4.2 µs</strong></span>
-                        <span>Model: <strong style="color:#a855f7;">RandomForest_v2.4</strong></span>
-                    </div>
-                    <div id="chart-ml-probs-${viewId}" style="flex:1; width:100%; min-height:160px; margin-top:8px;"></div>
-                </div>
-                <div class="ml-card">
-                    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#38bdf8; margin-bottom:4px;">
-                        Multi-Detector Feature Importance Radar
-                    </div>
-                    <div id="chart-ml-radar-${viewId}" style="flex:1; width:100%; min-height:220px;"></div>
-                </div>
-            </div>
-        `;
-        footerButtons = `<button class="btn-action btn-green" onclick="resetBuffer('${viewId}')">Reset AI Buffer</button>`;
-    } else if (chartType === 'slow_control') {
-        bodyContent = `
-            <div class="slowctrl-grid" id="slowctrl-grid-container">
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>PMT 1 High Voltage</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-hv1">1420.4 V</div>
-                    <div class="slowctrl-meta">Current: 1.12 µA | Limit: 1600 V</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>PMT 2 High Voltage</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-hv2">1418.1 V</div>
-                    <div class="slowctrl-meta">Current: 1.15 µA | Limit: 1600 V</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>PMT 3 High Voltage</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-hv3">1449.8 V</div>
-                    <div class="slowctrl-meta">Current: 0.94 µA | Limit: 1600 V</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>Gas Cherenkov Pressure</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-ch-p">2.451 bar</div>
-                    <div class="slowctrl-meta">Gas: CO2 | Target: 2.45 bar</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>Timepix Silicon Temp</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-tpx-t">18.4 °C</div>
-                    <div class="slowctrl-meta">V_bias: -50.0 V | Chiller Flow: 3.2 L/m</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>Cleanroom Environment</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-amb-t">21.8 °C</div>
-                    <div class="slowctrl-meta">Humidity: 42.4% RH | Pressure: 1013 hPa</div>
-                </div>
-            </div>
-        `;
-        footerButtons = `<button class="btn-action" onclick="resetBuffer('${viewId}')">Refresh Telemetry</button>`;
-    } else if (chartType === 'coincidence_view') {
-        bodyContent = `
-            <div style="padding:10px; height:100%; display:flex; flex-direction:column;">
-                <div class="coinc-summary-bar">
-                    <div class="coinc-stat"><span class="coinc-stat-lbl">Coincidence Window:</span><span class="coinc-stat-val" style="color:#38bdf8;">± 10.0 ns</span></div>
-                    <div class="coinc-stat"><span class="coinc-stat-lbl">Efficiency:</span><span class="coinc-stat-val" id="coinc-eff">85.4%</span></div>
-                    <div class="coinc-stat"><span class="coinc-stat-lbl">Background Rejection:</span><span class="coinc-stat-val" id="coinc-rej">14.6%</span></div>
-                    <div class="coinc-stat"><span class="coinc-stat-lbl">Matched Events:</span><span class="coinc-stat-val" id="coinc-total" style="color:#f59e0b;">0</span></div>
-                </div>
-                <div id="chart-${viewId}" style="flex:1; width:100%; min-height:220px;"></div>
-            </div>
-        `;
-        footerButtons = `<button class="btn-action btn-green" onclick="resetBuffer('${viewId}')">Clear Histogram</button>`;
-
-        } else if (chartType === 'run_control_console') {
-        bodyContent = `
-            <div class="tdaq-console-wrap" id="tdaq-console-${viewId}">
-                <!-- Tab Navigation -->
-                <div class="tdaq-nav-tabs">
-                    <button class="tdaq-tab-btn active" onclick="switchTdaqTab('${viewId}', 'rc')">Run Control</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'segments')">Segments & Resources</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'tags')">Dataset Tags</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'df')">🌊 DFPanel (Data Flow)</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'ers')">📜 ERS Message Log</button>
-                </div>
-
-                <!-- Tab 1: Run Control -->
-                <div class="tdaq-tab-content active" id="tab-${viewId}-rc">
-                    <div class="tdaq-state-bar">
-                        <div class="tdaq-state-node completed" id="st-${viewId}-initial">INITIAL</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-configured">CONFIGURED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-connected">CONNECTED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-initialized">INITIALIZED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node active-state" id="st-${viewId}-running">RUNNING</div>
-                    </div>
-
-                    <div class="tdaq-header-grid">
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Current State:</span>
-                            <span class="tdaq-header-val green" id="tdaq-val-state">RUNNING</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Run Number:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-run">#482910</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Partition Name:</span>
-                            <span class="tdaq-header-val purple">BL4S_PIONIST_2026</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Run Duration:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-duration">01:24:18</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">L1 Trigger Rate:</span>
-                            <span class="tdaq-header-val amber" id="tdaq-val-rate">420.5 Hz</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Dead Time %:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-deadtime">12.4% (Live: 87.6%)</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Accepted Events:</span>
-                            <span class="tdaq-header-val green" id="tdaq-val-events">34,812</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Trigger Logic:</span>
-                            <span class="tdaq-header-val" style="font-size:12px;color:#cbd5e1;">S1 ∧ S2 ∧ CALO_E</span>
-                        </div>
-                    </div>
-
-                    <div class="tdaq-btn-group">
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONFIGURE')">Configure</button>
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONNECT')">Connect</button>
-                        <button class="tdaq-btn-cmd btn-start" onclick="tdaqCommand('START')">Start Run</button>
-                        <button class="tdaq-btn-cmd btn-pause" onclick="tdaqCommand('PAUSE')">Pause Run</button>
-                        <button class="tdaq-btn-cmd btn-stop" onclick="tdaqCommand('STOP')">Stop Run</button>
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('RESET')">Unconfigure / Reset</button>
-                    </div>
-
-                    <div style="flex:1; min-height:180px; width:100%; border:1px solid var(--border); border-radius:6px; background:#141822; padding:6px;">
-                        <div id="chart-tdaq-rate-${viewId}" style="width:100%; height:100%;"></div>
-                    </div>
-                </div>
-
-                <!-- Tab 2: Segments & Resources -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-segments">
-                    <table class="tdaq-table">
-                        <thead>
-                            <tr>
-                                <th>Segment / Component</th>
-                                <th>Host</th>
-                                <th>PID</th>
-                                <th>Status</th>
-                                <th>Throughput / Events</th>
-                                <th>CPU / Mem</th>
-                                <th>Control</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>ROOT_PARTITION</strong> (Master Controller)</td>
-                                <td>srv-cern-01</td>
-                                <td>14021</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
-                                <td>All Segments Active</td>
-                                <td>3.4% / 420 MB</td>
-                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
-                            </tr>
-                            <tr id="seg-row-CALO">
-                                <td>├─ <strong>CALO_SEGMENT</strong> (16ch ADC)</td>
-                                <td>pc_bl4s_01</td>
-                                <td>14032</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-CALO">RUNNING</span></td>
-                                <td>1,420 ev/s (Pb-Glass)</td>
-                                <td>4.2% / 180 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('CALO', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-TRACKING">
-                                <td>├─ <strong>TRACKING_SEGMENT</strong> (DWC + Timepix3)</td>
-                                <td>pc_bl4s_02</td>
-                                <td>14045</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-TRACKING">RUNNING</span></td>
-                                <td>850 ev/s (55µm Silicon)</td>
-                                <td>6.8% / 310 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRACKING', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-TRIGGER">
-                                <td>├─ <strong>TRIGGER_SEGMENT</strong> (CTP Board + Veto)</td>
-                                <td>pc_bl4s_03</td>
-                                <td>14051</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-TRIGGER">RUNNING</span></td>
-                                <td>DeadTime: 12.4%</td>
-                                <td>1.2% / 64 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRIGGER', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-BEAM">
-                                <td>├─ <strong>BEAM_MONITOR_SEGMENT</strong> (S1/S2 + Cherenkov)</td>
-                                <td>pc_bl4s_04</td>
-                                <td>14064</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-BEAM">RUNNING</span></td>
-                                <td>2.45 bar CO2 / Normal</td>
-                                <td>1.8% / 96 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('BEAM', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-AI">
-                                <td>├─ <strong>AI_RECON_SEGMENT</strong> (PID Engine + Pi0 Mass)</td>
-                                <td>pc_bl4s_05</td>
-                                <td>14078</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-AI">RUNNING</span></td>
-                                <td>Latency: 3.8 µs</td>
-                                <td>14.2% / 540 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('AI', this)">Inhibit</button></td>
-                            </tr>
-                            <tr>
-                                <td>└─ <strong>DATA_STORAGE_SEGMENT</strong> (Kafka + HDF5)</td>
-                                <td>pc_bl4s_06</td>
-                                <td>14090</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
-                                <td>14.8 MB/s (Disk Free: 4.8 TB)</td>
-                                <td>5.1% / 620 MB</td>
-                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Tab 3: Dataset Tags -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-tags">
-                    <table class="tdaq-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter Tag</th>
-                                <th>Configured Value</th>
-                                <th>Description / Condition</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>Beam_Momentum</code></td>
-                                <td><strong style="color:#38bdf8;">10.0 GeV/c</strong></td>
-                                <td>CERN East Area PS T9 Positively Charged Beamline</td>
-                            </tr>
-                            <tr>
-                                <td><code>Target_Material</code></td>
-                                <td><strong style="color:#c084fc;">5.0 mm Lead (Pb)</strong></td>
-                                <td>Nuclear Target for Neutral Pion Inelastic Production</td>
-                            </tr>
-                            <tr>
-                                <td><code>Cherenkov_Pressure</code></td>
-                                <td><strong style="color:#10b981;">2.451 bar (CO2)</strong></td>
-                                <td>Gas Radiator Threshold for Electron/Pion Separation</td>
-                            </tr>
-                            <tr>
-                                <td><code>Timepix3_Bias</code></td>
-                                <td><strong>-50.0 V</strong></td>
-                                <td>Silicon Reverse Bias Depletion Voltage</td>
-                            </tr>
-                            <tr>
-                                <td><code>Calorimeter_Pedestal</code></td>
-                                <td><strong>100.0 ADC Channels</strong></td>
-                                <td>16-channel baseline dark pedestal subtraction</td>
-                            </tr>
-                            <tr>
-                                <td><code>Run_Type</code></td>
-                                <td><strong style="color:#f59e0b;">Physics_Production_Pi0</strong></td>
-                                <td>Dual-Photon Invariant Mass Benchmark Run</td>
-                            </tr>
-                            <tr>
-                                <td><code>Shifter_Team</code></td>
-                                <td><strong>Team PionIST 3</strong></td>
-                                <td>BL4S CERN Finalist Collaboration</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Tab 4: DFPanel (Data Flow) -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-df">
-                    <div class="tdaq-header-grid">
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Event Builder Throughput:</span>
-                            <span class="tdaq-header-val green" id="df-val-throughput">14.8 MB/s</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Network Bandwidth:</span>
-                            <span class="tdaq-header-val">118.4 Mbps</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Fragment Loss Rate:</span>
-                            <span class="tdaq-header-val green">0.000 %</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Total Data Written:</span>
-                            <span class="tdaq-header-val purple" id="df-val-written">1.84 GB</span>
-                        </div>
-                    </div>
-                    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#94a3b8; margin-top:6px;">
-                        Data Flow Pipeline: <code>Satellites ➔ Kafka Broker (9092) ➔ Coincidence Builder ➔ HDF5 Data Storage</code>
-                    </div>
-                </div>
-
-                <!-- Tab 5: ERS Message Log -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-ers">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <div class="ohp-grid-btn-group">
-                            <button class="ohp-grid-btn active" onclick="filterErsLogs('ALL')">All Logs</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('INFO')">INFO</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('WARN')">WARN</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('ERROR')">ERROR</button>
-                        </div>
-                        <button class="tdaq-grid-btn" onclick="clearErsLogs()"> Clear Logs</button>
-                    </div>
-                    <div class="tdaq-log-box" id="tdaq-ers-log-box">
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:01]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[ROOT_CONTROLLER]</span>
-                            <span>Partition BL4S_PIONIST_2026 loaded successfully from config.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:02]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[CALO_SEGMENT]</span>
-                            <span>16 Lead-Glass channels calibrated. Pedestals mapped to 100 ADC.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:03]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[CTP_TRIGGER]</span>
-                            <span>Trigger logic active (S1 ∧ S2 coincidence gate: ±10.0 ns).</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:04]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[AI_RECON]</span>
-                            <span>Neural PID Discriminator v3.0 weights loaded into memory.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:05]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[RUN_CONTROL]</span>
-                            <span>State changed: INITIALIZED ➔ RUNNING. Run #482910 started.</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        footerButtons = `
-            <button class="btn-action btn-green" onclick="tdaqCommand('START')">Resume/Start</button>
-            <button class="btn-action" onclick="tdaqCommand('PAUSE')">Pause</button>
-        `;
-
     } else if (chartType === 'run_control_console') {
         const dom = document.getElementById(`chart-tdaq-rate-${viewId}`);
         const rChart = dom ? echarts.init(dom) : null;
@@ -3371,6 +3014,8 @@ function createHistogramChart(chart, viewId) {
             animationDurationUpdate: 80
         }]
     });
+}
+
 let tdaqRateHistory = Array(30).fill(0);
 let tdaqTimeHistory = Array(30).fill('');
 
@@ -5081,7 +4726,7 @@ function renderOhpGrid() {
                         <span>${OHP_CHANNEL_LABELS[key]}</span>
                         <button class="ohp-expand-btn" onclick="openOhpModal('${key}')" title="Expand / Stats">⛶ Expand</button>
                     </div>
-                    <canvas id="ohp-canvas-${key}"></canvas>
+                    <div id="ohp-canvas-${key}" style="flex:1; width:100%; min-height:140px;"></div>
                 </div>
             `;
         }
@@ -5091,8 +4736,7 @@ function renderOhpGrid() {
     }
 
     for (const key of Object.keys(OHP_CHANNEL_LABELS)) {
-        const canvas = document.getElementById(`ohp-canvas-${key}`);
-        if (canvas) drawOhpMiniPlot(canvas, dataBuffers.ohp_series[key] || []);
+        drawOhpMiniPlot(`ohp-canvas-${key}`, dataBuffers.ohp_series[key] || []);
     }
 
     if (activeOhpModalKey) {
@@ -5102,121 +4746,72 @@ function renderOhpGrid() {
 
 function updateOhpModalPlot() {
     if (!activeOhpModalKey) return;
-    const canvas = document.getElementById('ohp-modal-canvas');
-    if (!canvas) return;
     
     const series = dataBuffers.ohp_series[activeOhpModalKey] || [];
-    drawOhpMiniPlot(canvas, series);
-
-    // Calculate ROOT Statistics
-    const vals = series.map(p => p.v);
-    const n = vals.length;
-    const sum = vals.reduce((a, b) => a + b, 0);
-    const mean = n > 0 ? (sum / n) : 0;
-    const variance = n > 0 ? vals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / n : 0;
-    const stdDev = Math.sqrt(variance);
-    const maxVal = vals.length ? Math.max(...vals) : 0;
-
-    const elEnt = document.getElementById('ohp-stat-entries'); if (elEnt) elEnt.textContent = n.toLocaleString();
-    const elMean = document.getElementById('ohp-stat-mean'); if (elMean) elMean.textContent = mean.toFixed(2);
-    const elStd = document.getElementById('ohp-stat-std'); if (elStd) elStd.textContent = stdDev.toFixed(2);
-    const elRms = document.getElementById('ohp-stat-rms'); if (elRms) elRms.textContent = Math.sqrt(mean*mean + variance).toFixed(2);
-    const elIn = document.getElementById('ohp-stat-integral'); if (elIn) elIn.textContent = sum.toLocaleString();
-    const elPk = document.getElementById('ohp-stat-peak'); if (elPk) elPk.textContent = maxVal.toLocaleString();
+    drawOhpMiniPlot('ohp-modal-canvas', series);
 }
 
-function drawOhpMiniPlot(canvas, series) {
-    const cssW = canvas.clientWidth || 180;
-    const cssH = canvas.clientHeight || 118;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    if (canvas.width !== cssW * dpr || canvas.height !== cssH * dpr) {
-        canvas.width = cssW * dpr;
-        canvas.height = cssH * dpr;
+const ohpEchartsInstances = {};
+
+function drawOhpMiniPlot(domId, series) {
+    const dom = document.getElementById(domId);
+    if (!dom) return;
+
+    if (!ohpEchartsInstances[domId]) {
+        ohpEchartsInstances[domId] = echarts.init(dom);
     }
-    const ctx = canvas.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, cssW, cssH);
-
-    // white ROOT-canvas background + plot frame
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, cssW, cssH);
-
-    const padL = 34, padR = 6, padT = 8, padB = 16;
-    const plotW = cssW - padL - padR;
-    const plotH = cssH - padT - padB;
-
+    const chart = ohpEchartsInstances[domId];
     const values = series.map(p => p.v);
-    const maxV = values.length ? Math.max(...values, 1) : 1;
-    const n = series.length;
-
-    // axes
-    ctx.strokeStyle = '#111827';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH);
-    ctx.stroke();
-
-    // faint gridlines
-    ctx.strokeStyle = 'rgba(15,23,42,0.08)';
-    for (let i = 1; i <= 3; i++) {
-        const y = padT + (plotH * i) / 4;
-        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
-    }
-
-    // y-axis max label
-    ctx.fillStyle = '#334155';
-    ctx.font = '8px JetBrains Mono, monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(maxV >= 1000 ? `${(maxV/1000).toFixed(1)}k` : `${Math.round(maxV)}`, padL - 3, padT + 4);
-    ctx.fillText('0', padL - 3, padT + plotH);
-
-    // the scaler ramp itself (black line like a real ROOT TGraph)
-    if (n > 1) {
-        ctx.strokeStyle = '#1d4ed8';
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        for (let i = 0; i < n; i++) {
-            const x = padL + (plotW * i) / (n - 1);
-            const y = padT + plotH - (values[i] / maxV) * plotH;
-            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-
-        // most recent point marker
-        const lastX = padL + plotW;
-        const lastY = padT + plotH - (values[n - 1] / maxV) * plotH;
-        ctx.fillStyle = '#dc2626';
-        ctx.beginPath();
-        ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    // ROOT-style stat box (Entries / Mean / StdDev / Underflow / Overflow)
+    
     const entries = values.length ? values[values.length - 1] : 0;
     const mean = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-    const variance = values.length ? values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length : 0;
-    const stdDev = Math.sqrt(variance);
+    const stdDev = values.length ? Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length) : 0;
 
-    const statLines = [
-        `Entries   ${entries.toFixed(0)}`,
-        `Mean      ${mean.toFixed(1)}`,
-        `Std Dev   ${stdDev.toFixed(1)}`,
-        `Underflow 0`,
-        `Overflow  0`
-    ];
-    const boxW = 64, boxH = statLines.length * 8 + 4;
-    const boxX = cssW - boxW - 3, boxY = 3;
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 0.75;
-    ctx.fillRect(boxX, boxY, boxW, boxH);
-    ctx.strokeRect(boxX, boxY, boxW, boxH);
-    ctx.fillStyle = '#0f1117';
-    ctx.font = '6.5px JetBrains Mono, monospace';
-    ctx.textAlign = 'left';
-    statLines.forEach((line, i) => {
-        ctx.fillText(line, boxX + 3, boxY + 9 + i * 8);
-    });
+    const option = {
+        animation: false,
+        backgroundColor: '#ffffff',
+        tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,0.9)', borderColor: '#999', textStyle: { color: '#000' } },
+        dataZoom: [
+            { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
+            { type: 'inside', yAxisIndex: 0, filterMode: 'none' }
+        ],
+        grid: { left: '40px', right: '15px', top: '15px', bottom: '20px' },
+        xAxis: { 
+            type: 'category', 
+            data: series.map((_, i) => i), 
+            show: false 
+        },
+        yAxis: { 
+            type: 'value', 
+            axisLabel: { fontSize: 10, color: '#334155' },
+            splitLine: { show: true, lineStyle: { color: 'rgba(15,23,42,0.08)' } }
+        },
+        graphic: [
+            {
+                type: 'group', right: 5, top: 5,
+                children: [
+                    { type: 'rect', z: 100, shape: { width: 75, height: 42 }, style: { fill: 'rgba(255,255,255,0.92)', stroke: '#94a3b8' } },
+                    { type: 'text', z: 100, left: 4, top: 4, style: { fill: '#334155', text: `Entries ${entries.toFixed(0)}\nMean    ${mean.toFixed(1)}\nStd Dev ${stdDev.toFixed(1)}`, font: '9px "JetBrains Mono", monospace' } }
+                ]
+            }
+        ],
+        series: [
+            {
+                type: 'line',
+                data: values,
+                itemStyle: { color: '#1d4ed8' },
+                lineStyle: { width: 1.5, type: 'step' },
+                showSymbol: false,
+            },
+            {
+                type: 'scatter',
+                data: values.length ? [[values.length - 1, values[values.length - 1]]] : [],
+                itemStyle: { color: '#dc2626' },
+                symbolSize: 4
+            }
+        ]
+    };
+    chart.setOption(option);
 }
 
 function exportDqmJson() {
@@ -5937,7 +5532,7 @@ setInterval(() => {
         </div>
         <div class="ohp-modal-body">
             <div class="ohp-canvas-wrap">
-                <canvas id="ohp-modal-canvas" style="width:100%; height:380px; display:block;"></canvas>
+                <div id="ohp-modal-canvas" style="width:100%; height:380px; display:block;"></div>
             </div>
             <div class="ohp-modal-stats">
                 <div class="root-stat-header">ROOT Statistics</div>
