@@ -394,7 +394,7 @@
             position: relative;
         }
 
-        .panel-body.tall { height: 620px; }
+        .panel-body.tall { height: calc(100vh - 180px); min-height: 700px; overflow: hidden; }
 
         .panel-footer {
             padding: 7px 14px;
@@ -760,10 +760,12 @@
             gap: 10px;
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 4px;
             padding-right: 8px;
             align-content: start;
             transition: all 0.2s ease;
+            min-height: 0;
         }
         .ohp-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .ohp-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
