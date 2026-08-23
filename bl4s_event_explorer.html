@@ -777,7 +777,7 @@
             display: flex;
             flex-direction: column;
             min-height: 180px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+        }      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             position: relative;
         }
@@ -909,6 +909,27 @@
         .root-stat-val { color: #f1f5f9; font-weight: 700; }
 
 
+        .ohp-card {
+            background: #f4f6f9;
+            border: 1px solid #94a3b8;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+        }
+        .ohp-card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
+            font-weight: 700;
+            color: #0f1117;
+            background: #d7dee8;
+            border-bottom: 1px solid #94a3b8;
+            padding: 3px 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ohp-card canvas { display: block; width: 100%; height: 118px; }
     
         /* ================= DUAL-MODE 3D FULLSCREEN STYLES ================= */
         .three-container.is-fullscreen {
@@ -2735,8 +2756,6 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                         </div>
                     </div>
                 </div>
-                <!-- Live Rate Chart for DFP -->
-                <div style="flex:1; width:100%; min-height:180px; margin-top:10px;" id="chart-${viewId}"></div>
             </div>
         `;
         footerButtons = ' ';
@@ -2784,7 +2803,7 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
             ${bodyContent}
         </div>
         <div class="panel-footer">
-            <span id="footer-${viewId}">${(chartType === 'ohp_view' || chartType === 'dfp_panel' || chartType === 'run_control_console') ? 'System Active' : 'Waiting for live data...'}</span>
+            <span id="footer-${viewId}">${(chartType === 'ohp_view' || chartType === 'run_control_console') ? 'System Active' : 'Waiting for live data...'}</span>
             <div>${footerButtons}</div>
         </div>
     `;
@@ -2799,18 +2818,18 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
     } else if (chartType === 'three_3d') {
         chart = initThree3D(document.getElementById(`three-container-${viewId}`));
     
-    } else if (chartType === 'dqm_view') {
+    } else if (chartType === 'run_control_console') {
+        const dom = document.getElementById(`chart-tdaq-rate-${viewId}`);
+        const rChart = dom ? echarts.init(dom) : null;
+        if (rChart) createTdaqRateChart(rChart);
+        chart = { type: 'run_control_console', chart: rChart };
+} else if (chartType === 'dqm_view') {
         chart = { type: 'dqm_view' };
         renderDqmGrid();
     } else if (chartType === 'ohp_view') {
         chart = { type: 'ohp_view' };
         renderOhpGrid();
-    } else if (chartType === 'dfp_panel') {
-        const dom = document.getElementById(`chart-${viewId}`);
-        const rChart = dom ? echarts.init(dom) : null;
-        if (rChart) createTdaqRateChart(rChart);
-        chart = { type: 'dfp_panel', chart: rChart };
-    } else if (chartType === 'live_event_feed' || chartType === 'geco_panel') {
+    } else if (chartType === 'dfp_panel' || chartType === 'live_event_feed' || chartType === 'geco_panel') {
         chart = { type: chartType };
     } else {
         const dom = document.getElementById(`chart-${viewId}`);
@@ -4540,7 +4559,7 @@ function updateAllPanels() {
         
         // Update active TDAQ Run Control charts if open
         for (const [vId, p] of Object.entries(activePanels)) {
-            if (p.chartType === 'dfp_panel' && p.chart && p.chart.chart) {
+            if (p.chartType === 'run_control_console' && p.chart && p.chart.chart) {
                 p.chart.chart.setOption({
                     xAxis: { data: tdaqTimeHistory },
                     series: [{ data: tdaqRateHistory }]
