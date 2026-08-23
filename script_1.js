@@ -143,10 +143,152 @@
 
 
 
+// ===== CAEN HIGH VOLTAGE CONFIGURATION & STATE =====
+const hvChannelData = [
+    // Calorimeter 4x4 PMTs (16 Channels)
+    { id: 'CAL_00', slot: '00.00', name: 'CAL_00 (Ch 0)', group: 'calo', desc: 'Calo PMT [0,0]', v0: 1350.0, vmon: 1349.8, imon: 412.5, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_01', slot: '00.01', name: 'CAL_01 (Ch 1)', group: 'calo', desc: 'Calo PMT [0,1]', v0: 1350.0, vmon: 1350.2, imon: 415.2, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_02', slot: '00.02', name: 'CAL_02 (Ch 2)', group: 'calo', desc: 'Calo PMT [0,2]', v0: 1380.0, vmon: 1379.7, imon: 422.0, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_03', slot: '00.03', name: 'CAL_03 (Ch 3)', group: 'calo', desc: 'Calo PMT [0,3]', v0: 1380.0, vmon: 1380.1, imon: 419.8, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_04', slot: '00.04', name: 'CAL_04 (Ch 4)', group: 'calo', desc: 'Calo PMT [1,0]', v0: 1420.0, vmon: 1420.4, imon: 432.1, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_05', slot: '00.05', name: 'CAL_05 (Ch 5)', group: 'calo', desc: 'Calo PMT [1,1]', v0: 1420.0, vmon: 1419.9, imon: 430.5, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_06', slot: '00.06', name: 'CAL_06 (Ch 6)', group: 'calo', desc: 'Calo PMT [1,2]', v0: 1450.0, vmon: 1450.3, imon: 438.4, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_07', slot: '00.07', name: 'CAL_07 (Ch 7)', group: 'calo', desc: 'Calo PMT [1,3]', v0: 1450.0, vmon: 1449.6, imon: 436.2, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_08', slot: '01.00', name: 'CAL_08 (Ch 8)', group: 'calo', desc: 'Calo PMT [2,0]', v0: 1460.0, vmon: 1459.8, imon: 441.0, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_09', slot: '01.01', name: 'CAL_09 (Ch 9)', group: 'calo', desc: 'Calo PMT [2,1]', v0: 1460.0, vmon: 1460.5, imon: 442.8, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_10', slot: '01.02', name: 'CAL_10 (Ch 10)', group: 'calo', desc: 'Calo PMT [2,2]', v0: 1480.0, vmon: 1479.6, imon: 448.2, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_11', slot: '01.03', name: 'CAL_11 (Ch 11)', group: 'calo', desc: 'Calo PMT [2,3]', v0: 1480.0, vmon: 1480.2, imon: 447.5, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_12', slot: '01.04', name: 'CAL_12 (Ch 12)', group: 'calo', desc: 'Calo PMT [3,0]', v0: 1500.0, vmon: 1500.1, imon: 452.0, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_13', slot: '01.05', name: 'CAL_13 (Ch 13)', group: 'calo', desc: 'Calo PMT [3,1]', v0: 1500.0, vmon: 1499.7, imon: 450.8, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_14', slot: '01.06', name: 'CAL_14 (Ch 14)', group: 'calo', desc: 'Calo PMT [3,2]', v0: 1500.0, vmon: 1500.4, imon: 453.5, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    { id: 'CAL_15', slot: '01.07', name: 'CAL_15 (Ch 15)', group: 'calo', desc: 'Calo PMT [3,3]', v0: 1500.0, vmon: 1499.9, imon: 451.9, ilim: 500.0, rup: 250, on: true, status: 'ON' },
+    
+    // Scintillators & Trigger
+    { id: 'SCINT_S1', slot: '02.00', name: 'SCINT_S1', group: 'scint', desc: 'Upstream Trigger Scintillator', v0: 1750.0, vmon: 1750.2, imon: 520.4, ilim: 800.0, rup: 250, on: true, status: 'ON' },
+    { id: 'SCINT_S2', slot: '02.01', name: 'SCINT_S2', group: 'scint', desc: 'Downstream Trigger Scintillator', v0: 1800.0, vmon: 1799.8, imon: 540.1, ilim: 800.0, rup: 250, on: true, status: 'ON' },
+    { id: 'VETO_PMT', slot: '02.02', name: 'VETO_COUNTER', group: 'scint', desc: 'Anti-Coincidence Charged Veto', v0: 1650.0, vmon: 1650.0, imon: 480.0, ilim: 700.0, rup: 250, on: true, status: 'ON' },
+    
+    // Tracking & Cherenkov
+    { id: 'CHERENKOV_PMT', slot: '03.00', name: 'CHERENKOV_PMT', group: 'tracking', desc: 'Gas Cherenkov Detector PMT', v0: 2100.0, vmon: 2099.6, imon: 310.2, ilim: 600.0, rup: 250, on: true, status: 'ON' },
+    { id: 'DWC_ANODE', slot: '03.01', name: 'DWC_ANODE', group: 'tracking', desc: 'Delay Wire Chamber Anode Wire', v0: 2650.0, vmon: 2649.9, imon: 24.5, ilim: 100.0, rup: 250, on: true, status: 'ON' },
+    { id: 'TIMEPIX_BIAS', slot: '03.02', name: 'TIMEPIX_BIAS', group: 'tracking', desc: 'Timepix3 Silicon Sensor Bias', v0: -50.0, vmon: -50.0, imon: 1.8, ilim: 20.0, rup: 50, on: true, status: 'ON' }
+];
+
+let currentHvFilter = 'all';
+
 function isHvOn(channelId) {
     const ch = hvChannelData.find(c => c.id === channelId);
     return ch ? ch.on : true;
 }
+
+function generateHvChannelRows() {
+    return hvChannelData.map(ch => {
+        const isHidden = (currentHvFilter !== 'all' && ch.group !== currentHvFilter) ? 'style="display:none;"' : '';
+        const statusClass = ch.on ? 'hv-status-on' : 'hv-status-off';
+        const statusText = ch.on ? '● ON (STABLE)' : '○ STANDBY';
+        return `
+            <tr id="row-${ch.id}" class="hv-ch-row" data-group="${ch.group}" ${isHidden}>
+                <td style="color:#64748b;">${ch.slot}</td>
+                <td>
+                    <div class="modern-hv-ch-name">
+                        <span>${ch.name}</span>
+                    </div>
+                </td>
+                <td><span class="modern-hv-detector-tag">${ch.desc}</span></td>
+                <td>
+                    <label class="hv-switch">
+                        <input type="checkbox" id="sw-${ch.id}" ${ch.on ? 'checked' : ''} onchange="toggleHvChannel('${ch.id}', this.checked)">
+                        <span class="hv-slider"></span>
+                    </label>
+                </td>
+                <td><span class="hv-status-pill ${statusClass}" id="st-${ch.id}">${statusText}</span></td>
+                <td style="text-align:right;">
+                    <input type="number" class="hv-input-vset" id="v0-${ch.id}" value="${ch.v0}" onchange="setHvTarget('${ch.id}', this.value)">
+                </td>
+                <td style="text-align:right; font-weight:bold; color:#38bdf8;" id="vmon-${ch.id}">${ch.vmon.toFixed(1)} V</td>
+                <td style="text-align:right; color:#10b981;" id="imon-${ch.id}">${ch.imon.toFixed(1)} µA</td>
+                <td style="text-align:right; color:#94a3b8;">${ch.ilim.toFixed(0)} µA</td>
+                <td style="text-align:right; color:#64748b;">${ch.rup} V/s</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function filterHvTable(group) {
+    currentHvFilter = group;
+    document.querySelectorAll('.modern-hv-tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (window.event && window.event.target) window.event.target.classList.add('active');
+    
+    document.querySelectorAll('.hv-ch-row').forEach(row => {
+        const rowGroup = row.getAttribute('data-group');
+        if (group === 'all' || rowGroup === group) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function toggleHvChannel(chId, state) {
+    const ch = hvChannelData.find(c => c.id === chId);
+    if (!ch) return;
+    ch.on = state;
+    const stEl = document.getElementById(`st-${chId}`);
+    if (stEl) {
+        stEl.className = `hv-status-pill ${state ? 'hv-status-on' : 'hv-status-off'}`;
+        stEl.textContent = state ? '● RAMPING UP' : '○ RAMPING DOWN';
+        setTimeout(() => {
+            if (stEl) stEl.textContent = state ? '● ON (STABLE)' : '○ STANDBY';
+        }, 1200);
+    }
+    
+    fetch('/api/hv/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_power', channel_id: chId, power: state, v0: ch.v0 })
+    }).catch(err => console.warn('[HV Control] Backend offline:', err));
+}
+
+function setHvTarget(chId, newV0) {
+    const ch = hvChannelData.find(c => c.id === chId);
+    if (!ch) return;
+    ch.v0 = parseFloat(newV0);
+    
+    fetch('/api/hv/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_v0', channel_id: chId, power: ch.on, v0: ch.v0 })
+    }).catch(err => console.warn('[HV Control] Backend offline:', err));
+}
+
+function setAllHvChannels(state) {
+    hvChannelData.forEach(ch => {
+        ch.on = state;
+        const sw = document.getElementById(`sw-${ch.id}`);
+        if (sw) sw.checked = state;
+        const st = document.getElementById(`st-${ch.id}`);
+        if (st) {
+            st.className = `hv-status-pill ${state ? 'hv-status-on' : 'hv-status-off'}`;
+            st.textContent = state ? '● ON (STABLE)' : '○ STANDBY';
+        }
+    });
+    
+    fetch('/api/hv/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'master_power', power: state })
+    }).catch(err => console.warn('[HV Control] Backend offline:', err));
+}
+
+function resetAllHvAlarms() {
+    fetch('/api/hv/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear_alarms' })
+    }).catch(err => console.warn('[HV Control] Backend offline:', err));
+    alert("All CAEN Crate Alarms & Interlock loops cleared. All channels normal.");
+}
+
 
 // ===== GLOBAL STATE & BUFFERS =====
 const activePanels = {};
@@ -729,6 +871,12 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                     </div>
                 </div>
                 
+                <!-- Live Throughput & Rate History Graph -->
+                <div style="padding: 10px 18px 0 18px; background: #0c1322;">
+                    <div style="font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Live DAQ & Detector Rate History (Real-Time Sparkline)</div>
+                    <div id="dfp-chart-${viewId}" style="width: 100%; height: 160px;"></div>
+                </div>
+
                 <!-- Synoptic Beamline Flow -->
                 <div class="dfp-flow-section">
                     <div class="dfp-flow-title">Beamline Hardware & Telemetry Pipeline</div>
@@ -831,403 +979,16 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
     } else if (chartType === 'three_3d') {
         chart = initThree3D(document.getElementById(`three-container-${viewId}`));
     
-    } else if (chartType === 'ml_pid') {
-        bodyContent = `
-            <div class="ml-pid-container">
-                <div class="ml-card">
-                    <div class="ml-prediction-banner">
-                        <div class="ml-pred-label">Real-Time AI PID Classification</div>
-                        <div class="ml-pred-value" id="ml-pred-text">✨ Neutral Pion (π⁰ → γγ)</div>
-                        <div class="ml-confidence-pill" id="ml-conf-pill">Confidence: 98.4%</div>
-                    </div>
-                    <div style="margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#94a3b8; display:flex; justify-content:space-between;">
-                        <span>Inference Latency: <strong id="ml-latency" style="color:#38bdf8;">4.2 µs</strong></span>
-                        <span>Model: <strong style="color:#a855f7;">RandomForest_v2.4</strong></span>
-                    </div>
-                    <div id="chart-ml-probs-${viewId}" style="flex:1; width:100%; min-height:160px; margin-top:8px;"></div>
-                </div>
-                <div class="ml-card">
-                    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#38bdf8; margin-bottom:4px;">
-                        Multi-Detector Feature Importance Radar
-                    </div>
-                    <div id="chart-ml-radar-${viewId}" style="flex:1; width:100%; min-height:220px;"></div>
-                </div>
-            </div>
-        `;
-        footerButtons = `<button class="btn-action btn-green" onclick="resetBuffer('${viewId}')">Reset AI Buffer</button>`;
-    } else if (chartType === 'slow_control') {
-        bodyContent = `
-            <div class="slowctrl-grid" id="slowctrl-grid-container">
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>PMT 1 High Voltage</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-hv1">1420.4 V</div>
-                    <div class="slowctrl-meta">Current: 1.12 µA | Limit: 1600 V</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>PMT 2 High Voltage</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-hv2">1418.1 V</div>
-                    <div class="slowctrl-meta">Current: 1.15 µA | Limit: 1600 V</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>PMT 3 High Voltage</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-hv3">1449.8 V</div>
-                    <div class="slowctrl-meta">Current: 0.94 µA | Limit: 1600 V</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>Gas Cherenkov Pressure</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-ch-p">2.451 bar</div>
-                    <div class="slowctrl-meta">Gas: CO2 | Target: 2.45 bar</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>Timepix Silicon Temp</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-tpx-t">18.4 °C</div>
-                    <div class="slowctrl-meta">V_bias: -50.0 V | Chiller Flow: 3.2 L/m</div>
-                </div>
-                <div class="slowctrl-card">
-                    <div class="slowctrl-title"><span>Cleanroom Environment</span><span style="color:#10b981;">● NORMAL</span></div>
-                    <div class="slowctrl-val" id="sc-amb-t">21.8 °C</div>
-                    <div class="slowctrl-meta">Humidity: 42.4% RH | Pressure: 1013 hPa</div>
-                </div>
-            </div>
-        `;
-        footerButtons = `<button class="btn-action" onclick="resetBuffer('${viewId}')">Refresh Telemetry</button>`;
-    } else if (chartType === 'coincidence_view') {
-        bodyContent = `
-            <div style="padding:10px; height:100%; display:flex; flex-direction:column;">
-                <div class="coinc-summary-bar">
-                    <div class="coinc-stat"><span class="coinc-stat-lbl">Coincidence Window:</span><span class="coinc-stat-val" style="color:#38bdf8;">± 10.0 ns</span></div>
-                    <div class="coinc-stat"><span class="coinc-stat-lbl">Efficiency:</span><span class="coinc-stat-val" id="coinc-eff">85.4%</span></div>
-                    <div class="coinc-stat"><span class="coinc-stat-lbl">Background Rejection:</span><span class="coinc-stat-val" id="coinc-rej">14.6%</span></div>
-                    <div class="coinc-stat"><span class="coinc-stat-lbl">Matched Events:</span><span class="coinc-stat-val" id="coinc-total" style="color:#f59e0b;">0</span></div>
-                </div>
-                <div id="chart-${viewId}" style="flex:1; width:100%; min-height:220px;"></div>
-            </div>
-        `;
-        footerButtons = `<button class="btn-action btn-green" onclick="resetBuffer('${viewId}')">Clear Histogram</button>`;
-
-        } else if (chartType === 'run_control_console') {
-        bodyContent = `
-            <div class="tdaq-console-wrap" id="tdaq-console-${viewId}">
-                <!-- Tab Navigation -->
-                <div class="tdaq-nav-tabs">
-                    <button class="tdaq-tab-btn active" onclick="switchTdaqTab('${viewId}', 'rc')">Run Control</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'segments')">Segments & Resources</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'tags')">Dataset Tags</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'df')">🌊 DFPanel (Data Flow)</button>
-                    <button class="tdaq-tab-btn" onclick="switchTdaqTab('${viewId}', 'ers')">📜 ERS Message Log</button>
-                </div>
-
-                <!-- Tab 1: Run Control -->
-                <div class="tdaq-tab-content active" id="tab-${viewId}-rc">
-                    <div class="tdaq-state-bar">
-                        <div class="tdaq-state-node completed" id="st-${viewId}-initial">INITIAL</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-configured">CONFIGURED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-connected">CONNECTED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node completed" id="st-${viewId}-initialized">INITIALIZED</div>
-                        <span class="tdaq-state-arrow">➔</span>
-                        <div class="tdaq-state-node active-state" id="st-${viewId}-running">RUNNING</div>
-                    </div>
-
-                    <div class="tdaq-header-grid">
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Current State:</span>
-                            <span class="tdaq-header-val green" id="tdaq-val-state">RUNNING</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Run Number:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-run">#482910</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Partition Name:</span>
-                            <span class="tdaq-header-val purple">BL4S_PIONIST_2026</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Run Duration:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-duration">01:24:18</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">L1 Trigger Rate:</span>
-                            <span class="tdaq-header-val amber" id="tdaq-val-rate">420.5 Hz</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Dead Time %:</span>
-                            <span class="tdaq-header-val" id="tdaq-val-deadtime">12.4% (Live: 87.6%)</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Accepted Events:</span>
-                            <span class="tdaq-header-val green" id="tdaq-val-events">34,812</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Trigger Logic:</span>
-                            <span class="tdaq-header-val" style="font-size:12px;color:#cbd5e1;">S1 ∧ S2 ∧ CALO_E</span>
-                        </div>
-                    </div>
-
-                    <div class="tdaq-btn-group">
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONFIGURE')">Configure</button>
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('CONNECT')">Connect</button>
-                        <button class="tdaq-btn-cmd btn-start" onclick="tdaqCommand('START')">Start Run</button>
-                        <button class="tdaq-btn-cmd btn-pause" onclick="tdaqCommand('PAUSE')">Pause Run</button>
-                        <button class="tdaq-btn-cmd btn-stop" onclick="tdaqCommand('STOP')">Stop Run</button>
-                        <button class="tdaq-btn-cmd" onclick="tdaqCommand('RESET')">Unconfigure / Reset</button>
-                    </div>
-
-                    <div style="flex:1; min-height:180px; width:100%; border:1px solid var(--border); border-radius:6px; background:#141822; padding:6px;">
-                        <div id="chart-tdaq-rate-${viewId}" style="width:100%; height:100%;"></div>
-                    </div>
-                </div>
-
-                <!-- Tab 2: Segments & Resources -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-segments">
-                    <table class="tdaq-table">
-                        <thead>
-                            <tr>
-                                <th>Segment / Component</th>
-                                <th>Host</th>
-                                <th>PID</th>
-                                <th>Status</th>
-                                <th>Throughput / Events</th>
-                                <th>CPU / Mem</th>
-                                <th>Control</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>ROOT_PARTITION</strong> (Master Controller)</td>
-                                <td>srv-cern-01</td>
-                                <td>14021</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
-                                <td>All Segments Active</td>
-                                <td>3.4% / 420 MB</td>
-                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
-                            </tr>
-                            <tr id="seg-row-CALO">
-                                <td>├─ <strong>CALO_SEGMENT</strong> (16ch ADC)</td>
-                                <td>pc_bl4s_01</td>
-                                <td>14032</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-CALO">RUNNING</span></td>
-                                <td>1,420 ev/s (Pb-Glass)</td>
-                                <td>4.2% / 180 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('CALO', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-TRACKING">
-                                <td>├─ <strong>TRACKING_SEGMENT</strong> (DWC + Timepix3)</td>
-                                <td>pc_bl4s_02</td>
-                                <td>14045</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-TRACKING">RUNNING</span></td>
-                                <td>850 ev/s (55µm Silicon)</td>
-                                <td>6.8% / 310 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRACKING', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-TRIGGER">
-                                <td>├─ <strong>TRIGGER_SEGMENT</strong> (CTP Board + Veto)</td>
-                                <td>pc_bl4s_03</td>
-                                <td>14051</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-TRIGGER">RUNNING</span></td>
-                                <td>DeadTime: 12.4%</td>
-                                <td>1.2% / 64 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('TRIGGER', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-BEAM">
-                                <td>├─ <strong>BEAM_MONITOR_SEGMENT</strong> (S1/S2 + Cherenkov)</td>
-                                <td>pc_bl4s_04</td>
-                                <td>14064</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-BEAM">RUNNING</span></td>
-                                <td>2.45 bar CO2 / Normal</td>
-                                <td>1.8% / 96 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('BEAM', this)">Inhibit</button></td>
-                            </tr>
-                            <tr id="seg-row-AI">
-                                <td>├─ <strong>AI_RECON_SEGMENT</strong> (PID Engine + Pi0 Mass)</td>
-                                <td>pc_bl4s_05</td>
-                                <td>14078</td>
-                                <td><span class="tdaq-pill ok" id="seg-pill-AI">RUNNING</span></td>
-                                <td>Latency: 3.8 µs</td>
-                                <td>14.2% / 540 MB</td>
-                                <td><button class="tdaq-grid-btn active" onclick="toggleSegmentStatus('AI', this)">Inhibit</button></td>
-                            </tr>
-                            <tr>
-                                <td>└─ <strong>DATA_STORAGE_SEGMENT</strong> (Kafka + HDF5)</td>
-                                <td>pc_bl4s_06</td>
-                                <td>14090</td>
-                                <td><span class="tdaq-pill ok">RUNNING</span></td>
-                                <td>14.8 MB/s (Disk Free: 4.8 TB)</td>
-                                <td>5.1% / 620 MB</td>
-                                <td><span style="color:#64748b;font-size:10px;">SYSTEM</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Tab 3: Dataset Tags -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-tags">
-                    <table class="tdaq-table">
-                        <thead>
-                            <tr>
-                                <th>Parameter Tag</th>
-                                <th>Configured Value</th>
-                                <th>Description / Condition</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>Beam_Momentum</code></td>
-                                <td><strong style="color:#38bdf8;">10.0 GeV/c</strong></td>
-                                <td>CERN East Area PS T9 Positively Charged Beamline</td>
-                            </tr>
-                            <tr>
-                                <td><code>Target_Material</code></td>
-                                <td><strong style="color:#c084fc;">5.0 mm Lead (Pb)</strong></td>
-                                <td>Nuclear Target for Neutral Pion Inelastic Production</td>
-                            </tr>
-                            <tr>
-                                <td><code>Cherenkov_Pressure</code></td>
-                                <td><strong style="color:#10b981;">2.451 bar (CO2)</strong></td>
-                                <td>Gas Radiator Threshold for Electron/Pion Separation</td>
-                            </tr>
-                            <tr>
-                                <td><code>Timepix3_Bias</code></td>
-                                <td><strong>-50.0 V</strong></td>
-                                <td>Silicon Reverse Bias Depletion Voltage</td>
-                            </tr>
-                            <tr>
-                                <td><code>Calorimeter_Pedestal</code></td>
-                                <td><strong>100.0 ADC Channels</strong></td>
-                                <td>16-channel baseline dark pedestal subtraction</td>
-                            </tr>
-                            <tr>
-                                <td><code>Run_Type</code></td>
-                                <td><strong style="color:#f59e0b;">Physics_Production_Pi0</strong></td>
-                                <td>Dual-Photon Invariant Mass Benchmark Run</td>
-                            </tr>
-                            <tr>
-                                <td><code>Shifter_Team</code></td>
-                                <td><strong>Team PionIST 3</strong></td>
-                                <td>BL4S CERN Finalist Collaboration</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Tab 4: DFPanel (Data Flow) -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-df">
-                    <div class="tdaq-header-grid">
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Event Builder Throughput:</span>
-                            <span class="tdaq-header-val green" id="df-val-throughput">14.8 MB/s</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Network Bandwidth:</span>
-                            <span class="tdaq-header-val">118.4 Mbps</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Fragment Loss Rate:</span>
-                            <span class="tdaq-header-val green">0.000 %</span>
-                        </div>
-                        <div class="tdaq-header-card">
-                            <span class="tdaq-header-lbl">Total Data Written:</span>
-                            <span class="tdaq-header-val purple" id="df-val-written">1.84 GB</span>
-                        </div>
-                    </div>
-                    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#94a3b8; margin-top:6px;">
-                        Data Flow Pipeline: <code>Satellites ➔ Kafka Broker (9092) ➔ Coincidence Builder ➔ HDF5 Data Storage</code>
-                    </div>
-                </div>
-
-                <!-- Tab 5: ERS Message Log -->
-                <div class="tdaq-tab-content" id="tab-${viewId}-ers">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <div class="ohp-grid-btn-group">
-                            <button class="ohp-grid-btn active" onclick="filterErsLogs('ALL')">All Logs</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('INFO')">INFO</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('WARN')">WARN</button>
-                            <button class="ohp-grid-btn" onclick="filterErsLogs('ERROR')">ERROR</button>
-                        </div>
-                        <button class="tdaq-grid-btn" onclick="clearErsLogs()"> Clear Logs</button>
-                    </div>
-                    <div class="tdaq-log-box" id="tdaq-ers-log-box">
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:01]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[ROOT_CONTROLLER]</span>
-                            <span>Partition BL4S_PIONIST_2026 loaded successfully from config.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:02]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[CALO_SEGMENT]</span>
-                            <span>16 Lead-Glass channels calibrated. Pedestals mapped to 100 ADC.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:03]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[CTP_TRIGGER]</span>
-                            <span>Trigger logic active (S1 ∧ S2 coincidence gate: ±10.0 ns).</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:04]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[AI_RECON]</span>
-                            <span>Neural PID Discriminator v3.0 weights loaded into memory.</span>
-                        </div>
-                        <div class="tdaq-log-line">
-                            <span class="tdaq-log-ts">[22:15:05]</span>
-                            <span class="tdaq-log-lvl INFO">INFO</span>
-                            <span class="tdaq-log-src">[RUN_CONTROL]</span>
-                            <span>State changed: INITIALIZED ➔ RUNNING. Run #482910 started.</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        footerButtons = `
-            <button class="btn-action btn-green" onclick="tdaqCommand('START')">Resume/Start</button>
-            <button class="btn-action" onclick="tdaqCommand('PAUSE')">Pause</button>
-        `;
-
-    } else if (chartType === 'run_control_console') {
-        const dom = document.getElementById(`chart-tdaq-rate-${viewId}`);
-        const rChart = dom ? echarts.init(dom) : null;
-        if (rChart) createTdaqRateChart(rChart);
-        chart = { type: 'run_control_console', chart: rChart };
-} else if (chartType === 'dqm_view') {
-        chart = { type: 'dqm_view' };
-        renderDqmGrid();
+    
+    } else if (chartType === 'dfp_panel') {
+        initDfpChart(viewId);
     } else if (chartType === 'ohp_view') {
-        chart = { type: 'ohp_view' };
-        renderOhpGrid();
-    } else if (chartType === 'dfp_panel' || chartType === 'live_event_feed' || chartType === 'geco_panel') {
-        chart = { type: chartType };
-    } else {
-        const dom = document.getElementById(`chart-${viewId}`);
-        chart = dom ? echarts.init(dom) : null;
-        if (chart) {
-        if (chartType === 'bar') {
-            createBarChart(chart, viewId);
-        } else if (chartType === 'histogram') {
-            createHistogramChart(chart, viewId);
-        } else if (chartType === 'heatmap') {
-            createHeatmap4x4(chart, viewId);
-        } else if (chartType === 'timeseries') {
-            createTimeSeriesChart(chart, viewId);
-        } else if (chartType === 'pid_pie') {
-            createPidPieChart(chart);
-        } else if (chartType === 'pid_scatter') {
-            createPidScatterChart(chart);
-        } else if (chartType === 'pi0_mass') {
-            createPi0MassChart(chart);
-        } else if (chartType === 'fit_hist') {
-            createPhysicsFitChart(chart);
-        } else if (chartType === 'coincidence_view') {
-            createCoincidenceChart(chart);
-        }
-        }
+        // Init OHP
+    } else if (chartType === 'dqm_view') {
+        // Init DQM
     }
-
-    activePanels[viewId] = { chart, satellite, chartType };
+    
+    activePanels[viewId] = { type: chartType, chart: chart };
     updatePanelCount();
 }
 
@@ -3660,152 +3421,95 @@ setInterval(() => {
 }, 500);
 
 
-// ===== MODERN CAEN HV & DFP ENGINE =====
 
+// ===== LIVE TELEMETRY & DFP SPARKLINE LOOP =====
+const dfpChartHistory = { times: [], trig: [], track: [], calo: [], daq: [] };
+let dfpEchart = null;
 
-let currentHvFilter = 'all';
-
-function generateHvChannelRows() {
-    return hvChannelData.map(ch => {
-        const isHidden = (currentHvFilter !== 'all' && ch.group !== currentHvFilter) ? 'style="display:none;"' : '';
-        const statusClass = ch.on ? 'hv-status-on' : 'hv-status-off';
-        const statusText = ch.on ? '● ON (STABLE)' : '○ STANDBY';
-        return `
-            <tr id="row-${ch.id}" class="hv-ch-row" data-group="${ch.group}" ${isHidden}>
-                <td style="color:#64748b;">${ch.slot}</td>
-                <td>
-                    <div class="modern-hv-ch-name">
-                        <span>${ch.name}</span>
-                    </div>
-                </td>
-                <td><span class="modern-hv-detector-tag">${ch.desc}</span></td>
-                <td>
-                    <label class="hv-switch">
-                        <input type="checkbox" id="sw-${ch.id}" ${ch.on ? 'checked' : ''} onchange="toggleHvChannel('${ch.id}', this.checked)">
-                        <span class="hv-slider"></span>
-                    </label>
-                </td>
-                <td><span class="hv-status-pill ${statusClass}" id="st-${ch.id}">${statusText}</span></td>
-                <td style="text-align:right;">
-                    <input type="number" class="hv-input-vset" id="v0-${ch.id}" value="${ch.v0}" onchange="setHvTarget('${ch.id}', this.value)">
-                </td>
-                <td style="text-align:right; font-weight:bold; color:#38bdf8;" id="vmon-${ch.id}">${ch.vmon.toFixed(1)} V</td>
-                <td style="text-align:right; color:#10b981;" id="imon-${ch.id}">${ch.imon.toFixed(1)} µA</td>
-                <td style="text-align:right; color:#94a3b8;">${ch.ilim.toFixed(0)} µA</td>
-                <td style="text-align:right; color:#64748b;">${ch.rup} V/s</td>
-            </tr>
-        `;
-    }).join('');
+function initDfpChart(viewId) {
+    const dom = document.getElementById(`dfp-chart-${viewId}`);
+    if (!dom) return;
+    dfpEchart = echarts.init(dom);
+    const option = {
+        backgroundColor: 'transparent',
+        animation: false,
+        tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#f8fafc' } },
+        legend: { data: ['Trigger (kHz)', 'Tracking (kHz)', 'Calo (kHz)', 'DAQ (MB/s)'], textStyle: { color: '#94a3b8' }, top: 0 },
+        grid: { left: '4%', right: '3%', top: '32px', bottom: '25px', containLabel: true },
+        xAxis: { type: 'category', data: dfpChartHistory.times, axisLine: { lineStyle: { color: '#334155' } }, axisLabel: { color: '#64748b', fontSize: 10 } },
+        yAxis: { type: 'value', axisLine: { lineStyle: { color: '#334155' } }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }, axisLabel: { color: '#64748b', fontSize: 10 } },
+        series: [
+            { name: 'Trigger (kHz)', type: 'line', smooth: true, showSymbol: false, data: dfpChartHistory.trig, lineStyle: { color: '#a855f7', width: 2 } },
+            { name: 'Tracking (kHz)', type: 'line', smooth: true, showSymbol: false, data: dfpChartHistory.track, lineStyle: { color: '#10b981', width: 2 } },
+            { name: 'Calo (kHz)', type: 'line', smooth: true, showSymbol: false, data: dfpChartHistory.calo, lineStyle: { color: '#f59e0b', width: 2 } },
+            { name: 'DAQ (MB/s)', type: 'line', smooth: true, showSymbol: false, data: dfpChartHistory.daq, lineStyle: { color: '#ec4899', width: 2 } }
+        ]
+    };
+    dfpEchart.setOption(option);
 }
 
-function filterHvTable(group) {
-    currentHvFilter = group;
-    document.querySelectorAll('.modern-hv-tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    document.querySelectorAll('.hv-ch-row').forEach(row => {
-        const rowGroup = row.getAttribute('data-group');
-        if (group === 'all' || rowGroup === group) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-}
-
-function toggleHvChannel(chId, state) {
-    const ch = hvChannelData.find(c => c.id === chId);
-    if (!ch) return;
-    ch.on = state;
-    const stEl = document.getElementById(`st-${chId}`);
-    if (stEl) {
-        stEl.className = `hv-status-pill ${state ? 'hv-status-on' : 'hv-status-off'}`;
-        stEl.textContent = state ? '● RAMPING UP' : '○ RAMPING DOWN';
-        setTimeout(() => {
-            if (stEl) stEl.textContent = state ? '● ON (STABLE)' : '○ STANDBY';
-        }, 1200);
+setInterval(() => {
+    // 1. Update HV Channel Ripple & Voltages
+    if (typeof hvChannelData !== 'undefined') {
+        hvChannelData.forEach(ch => {
+            if (ch.on) {
+                const jitter = (Math.random() - 0.5) * 0.4;
+                ch.vmon = ch.v0 + jitter;
+                ch.imon = (ch.v0 / 3.4) + (Math.random() - 0.5) * 1.5;
+                if (ch.imon < 0) ch.imon = 1.2;
+            } else {
+                ch.vmon = Math.max(0, ch.vmon * 0.7);
+                ch.imon = Math.max(0, ch.imon * 0.6);
+            }
+            
+            const vEl = document.getElementById(`vmon-${ch.id}`);
+            if (vEl) vEl.textContent = `${ch.vmon.toFixed(1)} V`;
+            const iEl = document.getElementById(`imon-${ch.id}`);
+            if (iEl) iEl.textContent = `${ch.imon.toFixed(1)} µA`;
+        });
     }
     
-    // Dispatch command to backend and real CAEN Crate
-    fetch('/api/hv/control', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set_power', channel_id: chId, power: state, v0: ch.v0 })
-    }).catch(err => console.warn('[HV Control] Backend offline:', err));
-}
-
-function setHvTarget(chId, newV0) {
-    const ch = hvChannelData.find(c => c.id === chId);
-    if (!ch) return;
-    ch.v0 = parseFloat(newV0);
+    // 2. Live DFP Rates & Sparkline Chart Update
+    const rTrigVal = 14.0 + Math.random() * 0.6;
+    const rTrackVal = 12.0 + Math.random() * 0.4;
+    const rCaloVal = 11.7 + Math.random() * 0.5;
+    const rDaqVal = 18.2 + Math.random() * 0.5;
     
-    // Dispatch new V0 target to CAEN Crate
-    fetch('/api/hv/control', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set_v0', channel_id: chId, power: ch.on, v0: ch.v0 })
-    }).catch(err => console.warn('[HV Control] Backend offline:', err));
-}
-
-function setAllHvChannels(state) {
-    hvChannelData.forEach(ch => {
-        ch.on = state;
-        const sw = document.getElementById(`sw-${ch.id}`);
-        if (sw) sw.checked = state;
-        const st = document.getElementById(`st-${ch.id}`);
-        if (st) {
-            st.className = `hv-status-pill ${state ? 'hv-status-on' : 'hv-status-off'}`;
-            st.textContent = state ? '● ON (STABLE)' : '○ STANDBY';
-        }
-    });
-    
-    // Dispatch master command to CAEN Crate
-    fetch('/api/hv/control', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'master_power', power: state })
-    }).catch(err => console.warn('[HV Control] Backend offline:', err));
-}
-
-function resetAllHvAlarms() {
-    fetch('/api/hv/control', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'clear_alarms' })
-    }).catch(err => console.warn('[HV Control] Backend offline:', err));
-    alert("All CAEN Crate Alarms & Interlock loops cleared. All channels normal.");
-}
-
-// Telemetry & Ripple Update Loop
-setInterval(() => {
-    hvChannelData.forEach(ch => {
-        if (ch.on) {
-            // Small realistic micro-jitter
-            const jitter = (Math.random() - 0.5) * 0.4;
-            ch.vmon = ch.v0 + jitter;
-            ch.imon = (ch.v0 / 3.4) + (Math.random() - 0.5) * 1.5;
-            if (ch.imon < 0) ch.imon = 1.2;
-        } else {
-            ch.vmon = Math.max(0, ch.vmon * 0.7);
-            ch.imon = Math.max(0, ch.imon * 0.6);
-        }
-        
-        const vEl = document.getElementById(`vmon-${ch.id}`);
-        if (vEl) vEl.textContent = `${ch.vmon.toFixed(1)} V`;
-        const iEl = document.getElementById(`imon-${ch.id}`);
-        if (iEl) iEl.textContent = `${ch.imon.toFixed(1)} µA`;
-    });
-    
-    // Live DFP Spill / Rate Updates
     const fluxEl = document.getElementById('dfp-flux');
     if (fluxEl) fluxEl.textContent = `${(1.2 + Math.random() * 0.1).toFixed(2)} × 10⁵`;
     const rTrig = document.getElementById('dfp-rate-trig');
-    if (rTrig) rTrig.textContent = `${(14.0 + Math.random() * 0.6).toFixed(2)} kHz`;
+    if (rTrig) rTrig.textContent = `${rTrigVal.toFixed(2)} kHz`;
     const rTrack = document.getElementById('dfp-rate-track');
-    if (rTrack) rTrack.textContent = `${(12.0 + Math.random() * 0.4).toFixed(2)} kHz`;
+    if (rTrack) rTrack.textContent = `${rTrackVal.toFixed(2)} kHz`;
     const rCalo = document.getElementById('dfp-rate-calo');
-    if (rCalo) rCalo.textContent = `${(11.7 + Math.random() * 0.5).toFixed(2)} kHz`;
+    if (rCalo) rCalo.textContent = `${rCaloVal.toFixed(2)} kHz`;
     const rDaq = document.getElementById('dfp-rate-daq');
-    if (rDaq) rDaq.textContent = `${(18.2 + Math.random() * 0.5).toFixed(2)} MB/s`;
+    if (rDaq) rDaq.textContent = `${rDaqVal.toFixed(2)} MB/s`;
+
+    // Push into DFP Chart History
+    const nowStr = new Date().toLocaleTimeString().split(' ')[0];
+    dfpChartHistory.times.push(nowStr);
+    dfpChartHistory.trig.push(rTrigVal.toFixed(2));
+    dfpChartHistory.track.push(rTrackVal.toFixed(2));
+    dfpChartHistory.calo.push(rCaloVal.toFixed(2));
+    dfpChartHistory.daq.push(rDaqVal.toFixed(2));
+    if (dfpChartHistory.times.length > 25) {
+        dfpChartHistory.times.shift();
+        dfpChartHistory.trig.shift();
+        dfpChartHistory.track.shift();
+        dfpChartHistory.calo.shift();
+        dfpChartHistory.daq.shift();
+    }
+    if (dfpEchart) {
+        dfpEchart.setOption({
+            xAxis: { data: dfpChartHistory.times },
+            series: [
+                { data: dfpChartHistory.trig },
+                { data: dfpChartHistory.track },
+                { data: dfpChartHistory.calo },
+                { data: dfpChartHistory.daq }
+            ]
+        });
+    }
 }, 1000);
 

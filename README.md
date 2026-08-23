@@ -172,11 +172,11 @@ A common question in DAQ design is: **How are physics simulation and particle ar
 
 3. **Establish Secure SSH Tunnels:**
    ```bash
-   # Reverse tunnel for Kafka (Sends CERN data -> Local Mac)
-   ssh -N -R 9092:localhost:9092 kayra@128.141.131.221
+   # Reverse tunnel for Kafka (Sends Remote data -> Local Machine)
+   ssh -N -R 9092:localhost:9092 user@server_ip
    
-   # Forward tunnel for Prometheus (Fetches CERN metrics -> Local Grafana)
-   ssh -N -L 9100:localhost:9100 kayra@128.141.131.221
+   # Forward tunnel for Prometheus & Event Explorer (Fetches metrics/UI -> Local Machine)
+   ssh -N -L 9100:localhost:9100 -L 5050:localhost:5050 user@server_ip
    ```
 
 ---
@@ -197,12 +197,17 @@ The simulation reproduces the complete BL4S beamline geometry:
 Save the following as `bl4s_config.toml`:
 
 ```toml
+[Constellation]
+log_level = "INFO"
+
 [TriggerModuleSatellite._default]
 trigger_rate = 100.0
+trigger_window_ns = 50.0
 
 [CalorimeterSatellite._default]
 channels = 16
 rate = 100.0
+noise_level = 0.05
 
 [ScintillatorSatellite._default]
 channels = 2
@@ -211,30 +216,112 @@ rate = 100.0
 [TimepixSatellite._default]
 channels = 16
 rate = 100.0
+matrix_size = 256
 
 [CherenkovSatellite._default]
 channels = 16
 rate = 100.0
+gas_pressure_bar = 1.2
 
 [H5DataWriter._default]
-output_path = "/eos/user/k/kyavuz/bl4s_data"
+output_path = "/path/to/data/output"
+max_file_size_mb = 1024
 ```
 
 ---
 
-## 7. Step-by-Step Operating Tutorial
+## 7. Step-by-Step Operating Tutorial (Startup Guide)
 
-1. **Deploy and Start the DAQ Cluster on CERN Server:**
-   ```bash
-   cd /home/kayra/bl4s_simulation
-   ./start_all.sh
-   ```
-2. **Orchestrating in MissionControl:**
-   * Connect to group `bl4s`.
-   * Click **Load Config** (`bl4s_config.toml`).
-   * Click **Initialize** (All satellites turn Green / `INIT`).
-   * Click **Launch** (All satellites turn Light Blue / `ORBIT`).
-   * Click **Start** (All satellites turn Dark Blue / `RUN`).
+To bring up the entire system from scratch, follow these steps in order:
+
+### Step 1: Start Background Services (Local Machine)
+Ensure Docker is running, then start Kafka and Grafana on your local machine:
+```bash
+cd /path/to/Constellation-DAQ-Git
+docker-compose -f docker-compose-kafka.yml up -d
+```
+Next, establish the SSH tunnels to the remote server to allow data flow. We provide a helper script, or you can run the SSH command manually. 
+
+If you do not have the helper script, create a file named `connect_remote_tunnel.sh` with the following content:
+```bash
+#!/bin/bash
+echo "Starting SSH Tunnel to DAQ Server..."
+echo "👉 Event Explorer: http://localhost:5050 (Remote Node)"
+echo "👉 Grafana Panel: http://localhost:3000 (Local Docker)"
+echo "Press CTRL+C to close the tunnel."
+# Note: Replace user@server_ip with your actual credentials
+ssh -N -L 5050:localhost:5050 -L 9100:localhost:9100 -R 9092:localhost:9092 user@server_ip
+```
+Make it executable and run it:
+```bash
+chmod +x connect_remote_tunnel.sh
+./connect_remote_tunnel.sh
+```
+> **Note:** Keep this terminal open in the background. If you encounter an "Address already in use" error, clear old tunnels (e.g., `killall ssh` on macOS).
+
+### Step 2: Start Server Services (Remote Node)
+Open a new terminal and SSH into your remote DAQ server:
+```bash
+ssh user@server_ip
+```
+Once connected, you can start the entire DAQ Simulation, Constellation Satellites, and the Web Backend using a single script:
+```bash
+cd /path/to/remote/bl4s_simulation
+./start_all.sh
+```
+
+> **What exactly is inside `start_all.sh`?** 
+> If you are setting up the server from scratch and need to create this script, here is the complete code. Save it as `start_all.sh` and run `chmod +x start_all.sh`:
+> 
+> ```bash
+> #!/bin/bash
+> 
+> # 1. Clean up old processes (to avoid conflicts)
+> echo "[0/5] Cleaning up old satellites and DAQ processes..."
+> pkill -9 -f "bl4s_satellites" 2>/dev/null || true
+> pkill -9 -f "SatelliteH5DataWriter" 2>/dev/null || true
+> pkill -9 -f "bl4s_event_explorer_server" 2>/dev/null || true
+> 
+> # 1.5. Move old data to archive (to avoid conflicts with same run ID)
+> echo "[1/5] Moving old data to archive..."
+> mkdir -p old_data
+> mv *.h5 old_data/ 2>/dev/null || true
+> 
+> # 2. Switch to Python Virtual Environment
+> echo "[2/5] Activating Virtual Environment..."
+> source venv/bin/activate
+> 
+> # 3. Start all Detector & ML Satellites as background jobs
+> echo "[3/5] Starting all Satellites..."
+> nohup ./venv/bin/SatelliteH5DataWriter -g bl4s > datawriter.log 2>&1 &
+> nohup python3 src/bl4s_satellites/TriggerModuleSatellite.py -g bl4s > trigger.log 2>&1 &
+> nohup python3 src/bl4s_satellites/CalorimeterSatellite.py -g bl4s > calorimeter.log 2>&1 &
+> nohup python3 src/bl4s_satellites/ScintillatorSatellite.py -g bl4s > scintillator.log 2>&1 &
+> nohup python3 src/bl4s_satellites/TimepixSatellite.py -g bl4s > timepix.log 2>&1 &
+> nohup python3 src/bl4s_satellites/CherenkovSatellite.py -g bl4s > cherenkov.log 2>&1 &
+> nohup python3 src/bl4s_satellites/PrometheusExporter.py -g bl4s > prometheus.log 2>&1 &
+> 
+> # 4. Start the Web UI Backend
+> echo "[4/5] Starting Event Explorer Backend..."
+> nohup python3 bl4s_event_explorer_server.py > event_explorer.log 2>&1 &
+> 
+> # 5. Open MissionControl (Optional, depends on CVMFS availability)
+> echo "[5/5] Setup complete. You can now open MissionControl or the Web UI!"
+> ```
+
+### Step 3: Access the Observability UI
+Once all systems are running, open your browser and navigate to:
+👉 **[http://localhost:5050](http://localhost:5050)**
+
+> **Important:** If you see "Waiting for live data..." or graphs aren't rendering, perform a **Hard Refresh** (`Cmd + Shift + R` or `Ctrl + Shift + R`) to clear browser caches.
+
+### Step 4: Orchestrating in MissionControl (Optional)
+If you are managing the DAQ state manually via MissionControl:
+* Connect to group `bl4s`.
+* Click **Load Config** (`bl4s_config.toml`).
+* Click **Initialize** (Satellites turn Green / `INIT`).
+* Click **Launch** (Satellites turn Light Blue / `ORBIT`).
+* Click **Start** (Satellites turn Dark Blue / `RUN`).
 
 ---
 
