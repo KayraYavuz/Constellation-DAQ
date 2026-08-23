@@ -394,7 +394,7 @@
             position: relative;
         }
 
-        .panel-body.tall { height: calc(100vh - 160px); min-height: 720px; overflow: hidden; display: flex; flex-direction: column; padding: 0; }
+        .panel-body.tall { height: calc(100vh - 160px); min-height: 720px; overflow-y: auto; }
 
         .panel-footer {
             padding: 7px 14px;
@@ -728,10 +728,7 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            height: 100%;
-            overflow: hidden;
-            padding: 10px;
-            box-sizing: border-box;
+            padding: 0;
         }
         .ohp-grid-btn-group {
             display: flex;
@@ -760,14 +757,9 @@
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 4px;
-            padding-right: 8px;
+            padding: 4px 8px 4px 4px;
             align-content: start;
             transition: all 0.2s ease;
-            min-height: 0;
         }
         .ohp-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .ohp-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
