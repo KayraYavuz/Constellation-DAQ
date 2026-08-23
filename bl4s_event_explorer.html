@@ -2560,6 +2560,8 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                     </div>
                     <div id="chart-ml-radar-${viewId}" style="flex:1; width:100%; min-height:220px;"></div>
                 </div>
+                <!-- Live Rate Chart for DFP -->
+                <div style="flex:1; width:100%; min-height:180px; margin-top:10px;" id="chart-${viewId}"></div>
             </div>
         `;
         footerButtons = `<button class="btn-action btn-green" onclick="resetBuffer('${viewId}')">Reset AI Buffer</button>`;
@@ -2596,6 +2598,8 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                     <div class="slowctrl-val" id="sc-amb-t">21.8 °C</div>
                     <div class="slowctrl-meta">Humidity: 42.4% RH | Pressure: 1013 hPa</div>
                 </div>
+                <!-- Live Rate Chart for DFP -->
+                <div style="flex:1; width:100%; min-height:180px; margin-top:10px;" id="chart-${viewId}"></div>
             </div>
         `;
         footerButtons = `<button class="btn-action" onclick="resetBuffer('${viewId}')">Refresh Telemetry</button>`;
@@ -2755,6 +2759,8 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                         </div>
                     </div>
                 </div>
+                <!-- Live Rate Chart for DFP -->
+                <div style="flex:1; width:100%; min-height:180px; margin-top:10px;" id="chart-${viewId}"></div>
             </div>
         `;
         footerButtons = ' ';
@@ -2770,6 +2776,8 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
                     <div class="terminal-line"><span class="term-ts">[SYSTEM]</span><span class="term-msg">Initializing TDAQ Live Event Feed...</span></div>
                     <div class="terminal-line"><span class="term-ts">[SYSTEM]</span><span class="term-msg">Subscribing to topics: 'ml_recon', 'physics_trigger'...</span></div>
                 </div>
+                <!-- Live Rate Chart for DFP -->
+                <div style="flex:1; width:100%; min-height:180px; margin-top:10px;" id="chart-${viewId}"></div>
             </div>
         `;
         footerButtons = ' ';
@@ -2828,13 +2836,34 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
     } else if (chartType === 'ohp_view') {
         chart = { type: 'ohp_view' };
         renderOhpGrid();
-    } else if (chartType === 'dfp_panel' || chartType === 'live_event_feed' || chartType === 'geco_panel') {
+    } else if (chartType === 'live_event_feed' || chartType === 'geco_panel') {
         chart = { type: chartType };
     } else {
         const dom = document.getElementById(`chart-${viewId}`);
         chart = dom ? echarts.init(dom) : null;
         if (chart) {
-        if (chartType === 'bar') {
+        if (chartType === 'dfp_panel') {
+                // Initial setup for DFP rate chart
+                chart.setOption({
+                    grid: { top: 10, right: 10, bottom: 20, left: 40 },
+                    tooltip: { trigger: 'axis', backgroundColor: 'rgba(15,23,42,0.9)' },
+                    xAxis: { type: 'category', data: [], show: false },
+                    yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
+                    series: [{
+                        data: [],
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'none',
+                        lineStyle: { width: 2, color: '#10b981' },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(16,185,129,0.3)' },
+                                { offset: 1, color: 'rgba(16,185,129,0.01)' }
+                            ])
+                        }
+                    }]
+                });
+            } else if (chartType === 'bar') {
             createBarChart(chart, viewId);
         } else if (chartType === 'histogram') {
             createHistogramChart(chart, viewId);
@@ -4411,7 +4440,16 @@ function updateAllPanels() {
     for (const [viewId, panelInfo] of Object.entries(activePanels)) {
         const { chart, chartType } = panelInfo;
 
-        if (chartType === 'bar' && viewId === 'calorimeter_energy') {
+        if (chartType === 'dfp_panel') {
+            const points = dataBuffers.trigger_rate;
+            chart.setOption({
+                xAxis: { data: points.map(p => new Date(p.t).toLocaleTimeString()) },
+                series: [{ data: points.map(p => p.v) }]
+            });
+            const last = points.length > 0 ? points[points.length - 1].v : 0;
+            updateFooter(viewId, `Live Throughput: ${last} ev/s`);
+        }
+        else if (chartType === 'bar' && viewId === 'calorimeter_energy') {
             chart.setOption({ series: [{ data: Array.from(dataBuffers.calorimeter_energy) }] });
             const total = dataBuffers.calorimeter_energy.reduce((a, b) => a + b, 0);
             updateFooter(viewId, `Total Energy: ${(total/1000).toFixed(1)}k ADC`);
@@ -4729,7 +4767,7 @@ function renderOhpGrid() {
                         <span>${OHP_CHANNEL_LABELS[key]}</span>
                         <button class="ohp-expand-btn" onclick="openOhpModal('${key}')" title="Expand / Stats">⛶ Expand</button>
                     </div>
-                    <div id="ohp-canvas-${key}" style="flex:1; width:100%; min-height:140px;"></div>
+                    <div id="ohp-canvas-${key}" style="flex:1; width:100%; min-height:220px;"></div>
                 </div>
             `;
         }
