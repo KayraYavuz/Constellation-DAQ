@@ -766,6 +766,7 @@
             transition: all 0.2s ease;
         }
         .ohp-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .ohp-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .ohp-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .ohp-grid.cols-1 { grid-template-columns: 1fr; }
 
@@ -2783,7 +2784,7 @@ function openPanel(viewId, satellite, title, chartType, isFullWidth = false) {
             ${bodyContent}
         </div>
         <div class="panel-footer">
-            <span id="footer-${viewId}">${(chartType === 'ohp_view' || chartType === 'run_control_console') ? 'System Active' : 'Waiting for live data...'}</span>
+            <span id="footer-${viewId}">${(chartType === 'ohp_view' || chartType === 'dfp_panel' || chartType === 'run_control_console') ? 'System Active' : 'Waiting for live data...'}</span>
             <div>${footerButtons}</div>
         </div>
     `;
