@@ -38,6 +38,7 @@ nohup python3 src/bl4s_satellites/CoincidenceEventBuilder.py -g bl4s > coinciden
 nohup python3 src/bl4s_satellites/PhysicsReconstructionSatellite.py -g bl4s > physics_recon.log 2>&1 &
 nohup python3 src/bl4s_satellites/MachineLearningSatellite.py -g bl4s > ml_pid.log 2>&1 &
 nohup python3 src/bl4s_satellites/SlowControlSatellite.py -g bl4s > slow_control.log 2>&1 &
+nohup python3 src/bl4s_satellites/caen_hv_satellite.py -g bl4s > caen_hv.log 2>&1 &
 nohup python3 src/bl4s_satellites/PrometheusExporter.py -g bl4s > prometheus.log 2>&1 &
 
 # Live Event Explorer Web Backend & Kafka Auto-Start

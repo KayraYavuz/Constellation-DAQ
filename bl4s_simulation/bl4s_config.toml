@@ -51,3 +51,8 @@ rate = 40.0
 [PrometheusExporter.pc_bl4s_07]
 metrics_port = 9100
 
+[caen_hv_satellite.pc_bl4s_07]
+channels = 16
+ramp_rate_v_per_s = 50.0
+
+
