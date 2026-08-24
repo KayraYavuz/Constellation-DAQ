@@ -6,12 +6,21 @@ pkill -9 -f "bl4s_satellites" 2>/dev/null || true
 pkill -9 -f "SatelliteH5DataWriter" 2>/dev/null || true
 pkill -9 -f "bl4s_event_explorer_server" 2>/dev/null || true
 
-# 1.5. Ensure local data directory exists & clear python cache
-echo "[1/5] Ensuring storage directory and clearing cache..."
+# 1.5. Ensure local data directory exists, clear python cache & auto-sync to CERNBox
+echo "[1/5] Ensuring storage directories, archiving old data and syncing to CERNBox..."
 mkdir -p /home/kayra/bl4s_simulation/data
 mkdir -p /home/kayra/bl4s_simulation/old_data
+mkdir -p /eos/user/k/kyavuz/bl4s_data 2>/dev/null || true
+
+# Copy all generated runs to CERNBox if accessible
+cp -f /home/kayra/bl4s_simulation/data/*.h5 /eos/user/k/kyavuz/bl4s_data/ 2>/dev/null || true
+cp -f /home/kayra/bl4s_simulation/*.h5 /eos/user/k/kyavuz/bl4s_data/ 2>/dev/null || true
+cp -f /home/kayra/bl4s_simulation/old_data/*.h5 /eos/user/k/kyavuz/bl4s_data/ 2>/dev/null || true
+
+# Archive old data locally
 mv /home/kayra/bl4s_simulation/*.h5 /home/kayra/bl4s_simulation/old_data/ 2>/dev/null || true
 mv /home/kayra/bl4s_simulation/data/*.h5 /home/kayra/bl4s_simulation/old_data/ 2>/dev/null || true
+
 find /home/kayra/bl4s_simulation -name "*.pyc" -delete 2>/dev/null || true
 find /home/kayra/bl4s_simulation -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
