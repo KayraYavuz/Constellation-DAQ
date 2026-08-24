@@ -50,6 +50,13 @@ nohup python3 src/bl4s_satellites/SlowControlSatellite.py -g bl4s > slow_control
 nohup python3 src/bl4s_satellites/caen_hv_satellite.py -g bl4s > caen_hv.log 2>&1 &
 nohup python3 src/bl4s_satellites/PrometheusExporter.py -g bl4s > prometheus.log 2>&1 &
 
+# Real-Time Automatic CERNBox Sync Daemon
+if [ -f "auto_cernbox_sync.py" ]; then
+    nohup python3 auto_cernbox_sync.py > cernbox_sync.log 2>&1 &
+    echo "  -> CERNBox Real-Time Auto-Sync Daemon active!"
+fi
+
+
 # Live Event Explorer Web Backend & Kafka Auto-Start
 if [ -f "docker-compose-kafka.yml" ]; then
     docker compose -f docker-compose-kafka.yml up -d 2>/dev/null || docker-compose -f docker-compose-kafka.yml up -d 2>/dev/null || true
