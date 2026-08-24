@@ -28,6 +28,8 @@ If you have never used Constellation, Kafka, Grafana, or Particle Physics simula
    - [8.2 Grafana Control Room Dashboard](#82-grafana-control-room-dashboard)
    - [8.3 Live Kafka Calorimeter Viewer](#83-live-kafka-calorimeter-viewer)
 9. [Offline Data Analysis (HDF5)](#9-offline-data-analysis-hdf5)
+10. [Hardware Integration: Connecting Real C++ Detectors (VME/Drivers)](#10-hardware-integration-connecting-real-c-detectors-vmedrivers)
+11. [High Voltage Slow Control: CAEN SY5527 & GECO Integration](#11-high-voltage-slow-control-caen-sy5527--geco-integration)
 
 ---
 
@@ -366,3 +368,110 @@ python analyze_h5_calorimeter.py path/to/run.h5
 python analyze_h5_timepix.py path/to/run.h5
 python analyze_h5_qdc.py path/to/run.h5
 ```
+
+---
+
+## 10. Hardware Integration: Connecting Real C++ Detectors (VME/Drivers)
+
+When transitioning from the simulation phase to the real experiment at CERN (T9 Beamline), the mock data generators are replaced with actual detector hardware readout libraries (e.g., `libCAENVME.so`, Timepix/Katherine libraries, DWC TDC drivers).
+
+Constellation's native architecture is written in **C++20** with high-performance Python bindings, offering two integration methods:
+
+### Method 1 (Recommended): Native C++ Constellation Satellite
+Create a C++ class inheriting from `constellation::satellite::Satellite`. This provides zero-copy memory transfers and sub-microsecond latency:
+
+```cpp
+#include "constellation/core/satellite/Satellite.hpp"
+#include "caen_vme_driver.h" // Hardware vendor header
+
+class VMECalorimeterSatellite : public constellation::satellite::Satellite {
+public:
+    using constellation::satellite::Satellite::Satellite;
+
+protected:
+    // 1. INIT: Open hardware handle & configure registers
+    void initializing(const constellation::core::Configuration& config) override {
+        int handle = CAENVME_Init(V1718_USB, 0, 0);
+        // Set QDC / TDC register thresholds...
+    }
+
+    // 2. RUN: Read hardware FIFO and transmit to Constellation network
+    void running(const std::stop_token& stop_token) override {
+        while (!stop_token.stop_requested()) {
+            std::vector<uint32_t> raw_event = read_vme_fifo();
+
+            if (!raw_event.empty()) {
+                auto record = create_data_record();
+                record.add_block(raw_event.data(), raw_event.size() * sizeof(uint32_t));
+                send_data_record(std::move(record)); // Flushes to H5DataWriter and Kafka
+            }
+        }
+    }
+};
+```
+
+### Method 2: Python Satellite with C++ Wrapper (`ctypes` / `pybind11`)
+If you want to keep the existing Python satellites (`CalorimeterSatellite.py`, etc.), compile your existing C++ readout code into a shared library (`.so`) and call it directly inside `generate_physics_event()`:
+
+```python
+import ctypes
+from Geant4ReplaySatellite import Geant4ReplaySatellite
+
+# Load compiled vendor C++ library
+c_vme_lib = ctypes.CDLL("./libcaen_vme_reader.so")
+
+class CalorimeterSatellite(Geant4ReplaySatellite):
+    def generate_physics_event(self) -> bytes:
+        # Allocate 16-channel buffer
+        buffer = (ctypes.c_uint16 * 16)()
+        # Direct hardware read from VME QDC module via C++
+        c_vme_lib.read_vme_calorimeter_channels(buffer)
+        return bytes(buffer)
+```
+
+### 📋 Architecture Parity Table (Simulation vs. Real Beam)
+
+| Layer | Simulation (Current State) | Real Experiment (T9 Beamline) |
+| :--- | :--- | :--- |
+| **Hardware Driver** | `np.random` / Geant4 physics replay | `libCAENVME.so` / Vendor C++ API |
+| **Data Transport (CDTP)** | ZeroMQ (Unchanged) | ZeroMQ (Unchanged) |
+| **Disk Storage** | `SatelliteH5DataWriter` (.h5) | `SatelliteH5DataWriter` (.h5) |
+| **Live Streaming** | Protocol Buffers + Kafka | Protocol Buffers + Kafka |
+| **Event Explorer UI** | `localhost:5050` (Unchanged) | `localhost:5050` (Unchanged) |
+
+---
+
+## 11. High Voltage Slow Control: CAEN SY5527 & GECO Integration
+
+The detector chain (Lead Glass Calorimeter, Cherenkov, S1/S2 Scintillators) requires stable high voltage supply (ranging from -1500V to +2500V) provided by the **CAEN SY5527 / SY4527 Universal Multichannel Power Supply Mainframe**.
+
+Instead of relying on a standalone desktop installation of CAEN GECO 2020 on local computers, our DAQ framework integrates HV Slow Control directly into the unified web platform:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              CAEN SY5527 HV Mainframe (Hardware)            │
+│                 (Direct Ethernet Connection)                │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ TCP/IP / CAENHVWrapper API
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│          SlowControlSatellite.py / caen_hv_satellite.py     │
+│             (Runs on CERN DAQ Server pc-bl4s-07)            │
+│  - SetVoltage(ch, V_target)   - Ramp Up / Ramp Down (50V/s) │
+│  - ReadVoltage(ch) / ReadCurrent(ch)   - Overcurrent TRIP   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ WebSocket Push / Prometheus
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│      Unified Control Room: Event Explorer & Grafana         │
+│  👉 http://localhost:5050  (Web-Based GECO Replica Panel)   │
+│  👉 http://localhost:3000  (Grafana Slow-Control Dashboard) │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Highlights of the Web GECO Integration:
+1. **Direct Hardware Communication:** The `SlowControlSatellite` communicates with the mainframe via the official `CAENHVWrapper` library (C/Python bindings) over the local Ethernet network.
+2. **Zero Third-Party Client Dependency:** Shifters in the control room or remote collaborators do not need to install desktop software. Any browser at `localhost:5050` provides full channel toggling (`ON/OFF`), target voltage setting (`V_0`), real-time voltage monitoring ($V_{mon}$), current monitoring ($I_{mon}$), and safety trip alerts.
+3. **Integrated Telemetry:** High voltage states are exported to Prometheus (`:9100`) and rendered on Grafana speedometers and time-series panels alongside physics throughput.
+
+

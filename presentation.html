@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PionIST 3 — BL4S 2026 DAQ & Observability Presentation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --r-background-color: #0a0e1a;
+        --r-main-font: 'Inter', sans-serif;
+        --r-heading-font: 'Inter', sans-serif;
+        --r-code-font: 'JetBrains Mono', monospace;
+        --r-main-color: #e2e8f0;
+        --r-heading-color: #f8fafc;
+        --r-link-color: #38bdf8;
+        --cern-blue: #0033A0;
+        --cern-gold: #f59e0b;
+        --accent-purple: #a855f7;
+        --accent-green: #10b981;
+        --accent-pink: #ec4899;
+        --accent-cyan: #22d3ee;
+    }
+    .reveal { font-family: 'Inter', sans-serif; font-size: 28px; }
+    .reveal h1 { font-size: 2.2em; font-weight: 800; letter-spacing: -1px; }
+    .reveal h2 { font-size: 1.6em; font-weight: 700; color: var(--accent-cyan); letter-spacing: -0.5px; }
+    .reveal h3 { font-size: 1.2em; font-weight: 600; color: var(--cern-gold); }
+    .reveal p, .reveal li { font-size: 0.85em; line-height: 1.6; color: #cbd5e1; }
+    .reveal code { font-family: 'JetBrains Mono', monospace; font-size: 0.75em; }
+    .reveal pre code { font-size: 0.65em; line-height: 1.5; }
+    .reveal .slides section { text-align: left; }
+    .title-slide { text-align: center !important; }
+    .title-slide h1 {
+        background: linear-gradient(135deg, #38bdf8, #a855f7, #ec4899);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        font-size: 2.8em; margin-bottom: 10px;
+    }
+    .title-slide .subtitle { font-size: 1.1em; color: #94a3b8; margin-bottom: 30px; }
+    .title-slide .team-name { font-size: 1.4em; color: var(--cern-gold); font-weight: 700; }
+    .title-slide .cern-badge {
+        display: inline-block; background: rgba(0,51,160,0.25); border: 2px solid var(--cern-blue);
+        padding: 8px 20px; border-radius: 8px; color: #60a5fa; font-weight: 600; font-size: 0.9em;
+        margin-top: 15px;
+    }
+    .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 20px 0; }
+    .metric-card {
+        background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px; padding: 16px; text-align: center;
+    }
+    .metric-card .value { font-size: 2em; font-weight: 800; }
+    .metric-card .label { font-size: 0.7em; color: #94a3b8; margin-top: 4px; }
+    .metric-card.blue .value { color: var(--accent-cyan); }
+    .metric-card.purple .value { color: var(--accent-purple); }
+    .metric-card.green .value { color: var(--accent-green); }
+    .metric-card.gold .value { color: var(--cern-gold); }
+    .metric-card.pink .value { color: var(--accent-pink); }
+    .arch-box {
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px; padding: 14px 18px; margin: 8px 0; font-size: 0.82em;
+    }
+    .arch-box.highlight { border-color: var(--accent-cyan); background: rgba(34,211,238,0.06); }
+    .arch-box.kafka { border-color: var(--accent-purple); background: rgba(168,85,247,0.06); }
+    .arch-box.detector { border-color: var(--accent-green); background: rgba(16,185,129,0.06); }
+    .flow-arrow { text-align: center; font-size: 1.5em; color: var(--accent-cyan); margin: 4px 0; }
+    .reveal table { font-size: 0.72em; width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .reveal table th { background: rgba(56,189,248,0.12); color: var(--accent-cyan); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid rgba(56,189,248,0.3); }
+    .reveal table td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .reveal table tr:hover td { background: rgba(255,255,255,0.03); }
+    .reveal pre { background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    .sat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 15px 0; }
+    .sat-card {
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px; padding: 12px; text-align: center;
+    }
+    .sat-card .icon { font-size: 2em; margin-bottom: 6px; }
+    .sat-card .name { font-size: 0.8em; font-weight: 700; color: #f1f5f9; }
+    .sat-card .desc { font-size: 0.65em; color: #94a3b8; margin-top: 4px; }
+    .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7em; font-weight: 600; margin: 2px; }
+    .tag-blue { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+    .tag-purple { background: rgba(168,85,247,0.15); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); }
+    .tag-green { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+    .tag-gold { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .tag-pink { background: rgba(236,72,153,0.15); color: #ec4899; border: 1px solid rgba(236,72,153,0.3); }
+    .equation {
+        text-align: center; font-size: 1.3em; color: var(--cern-gold);
+        background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);
+        padding: 14px 24px; border-radius: 10px; margin: 15px auto;
+        font-family: 'JetBrains Mono', monospace; font-weight: 600; display: inline-block;
+    }
+    .beamline { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 20px 0; }
+    .beam-node {
+        background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+        border-radius: 8px; padding: 8px 12px; font-size: 0.7em; font-weight: 600; color: #10b981;
+        text-align: center; min-width: 80px;
+    }
+    .beam-node.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56,189,248,0.1); }
+    .beam-arrow { font-size: 1.2em; color: #475569; }
+    .section-divider { text-align: center !important; }
+    .section-divider h2 { font-size: 2em; }
+    .section-number {
+        font-size: 5em; font-weight: 900; line-height: 1;
+        background: linear-gradient(135deg, rgba(56,189,248,0.3), rgba(168,85,247,0.3));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .two-col-60-40 { display: grid; grid-template-columns: 3fr 2fr; gap: 24px; align-items: start; }
+    .highlight-box {
+        background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(168,85,247,0.08));
+        border: 1px solid rgba(56,189,248,0.2); border-radius: 12px;
+        padding: 16px 20px; margin: 12px 0;
+    }
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px rgba(56,189,248,0.2); } 50% { box-shadow: 0 0 20px rgba(56,189,248,0.5); } }
+    .glow { animation: pulse-glow 2s infinite; }
+    .fragment.fade-in-then-semi-out.visible.current-fragment { opacity: 1; }
+    .fragment.fade-in-then-semi-out.visible:not(.current-fragment) { opacity: 0.4; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- SLIDE 1: TITLE -->
+<section class="title-slide" data-transition="zoom">
+    <p class="team-name">Team PionIST 3</p>
+    <h1>Real-Time DAQ & Online Observability<br>for the BL4S 2026 Experiment</h1>
+    <p class="subtitle">A Complete Constellation-Based Data Acquisition Framework<br>with Live Physics Monitoring at CERN PS East Area T9</p>
+    <div class="cern-badge">CERN — Beamline for Schools 2026</div>
+    <p style="margin-top:25px; font-size:0.7em; color:#64748b;">Kayra Yavuz &bull; August 2026</p>
+</section>
+
+<!-- SLIDE 2: AGENDA -->
+<section data-transition="slide">
+    <h2>Agenda</h2>
+    <div style="display:grid; grid-template-columns: auto 1fr; gap: 10px 20px; font-size:0.9em; margin-top:20px;">
+        <span class="tag tag-blue">01</span><span>Physics Goal: pi0 to gamma-gamma Invariant Mass Reconstruction</span>
+        <span class="tag tag-green">02</span><span>Beamline & Detector Setup at T9</span>
+        <span class="tag tag-purple">03</span><span>DAQ Architecture: Constellation Framework</span>
+        <span class="tag tag-gold">04</span><span>Real-Time Observability Stack</span>
+        <span class="tag tag-pink">05</span><span>Machine Learning PID & Online Reconstruction</span>
+        <span class="tag tag-blue">06</span><span>Live Demo & Results</span>
+    </div>
+</section>
+
+<!-- SECTION 1: PHYSICS -->
+<section>
+<section class="section-divider" data-transition="zoom">
+    <div class="section-number">01</div>
+    <h2>Physics Motivation</h2>
+    <p style="color:#94a3b8; text-align:center;">Neutral Pion Decay & Particle Identification</p>
+</section>
+
+<section data-transition="slide">
+    <h2>Primary Physics Goal</h2>
+    <div class="highlight-box">
+        <h3>Reconstruct pi0 to gamma-gamma Invariant Mass</h3>
+        <p>Observe the neutral pion decay at the CERN PS T9 secondary hadron beamline by detecting two coincident photon showers in the electromagnetic calorimeter.</p>
+    </div>
+    <div class="equation">M_inv = sqrt(2 * E_g1 * E_g2 * (1 - cos theta)) ~ 135.0 MeV/c2</div>
+    <div class="two-col" style="margin-top:15px;">
+        <div>
+            <h3>Key Measurements</h3>
+            <ul>
+                <li><strong>Calorimetry:</strong> 4x4 Lead Glass -> E_gamma (MeV)</li>
+                <li><strong>Cherenkov PID:</strong> e-/pi- separation (QDC threshold)</li>
+                <li><strong>Tracking:</strong> DWC + Timepix3 (256x256 pixels)</li>
+                <li><strong>Timing:</strong> S1/S2 Scintillator ToF (sub-ns TDC)</li>
+            </ul>
+        </div>
+        <div>
+            <h3>Beam Parameters</h3>
+            <ul>
+                <li>Momentum: <strong>1 - 10 GeV/c</strong></li>
+                <li>Composition: e-, pi-, mu-, p</li>
+                <li>Spill cycle: <strong>0.4 s / 10 s</strong></li>
+                <li>Flux: ~10^5 particles/spill</li>
+            </ul>
+        </div>
+    </div>
+</section>
+</section>
+
+<!-- SECTION 2: DETECTORS -->
+<section>
+<section class="section-divider" data-transition="zoom">
+    <div class="section-number">02</div>
+    <h2>Beamline & Detector Setup</h2>
+    <p style="color:#94a3b8; text-align:center;">T9 East Area - Complete Instrument Chain</p>
+</section>
+
+<section data-transition="slide">
+    <h2>Beamline Geometry (T9 East Area)</h2>
+    <div class="beamline">
+        <div class="beam-node active">T9 Target<br><span style="font-size:0.75em;">10 GeV/c</span></div>
+        <div class="beam-arrow">-></div>
+        <div class="beam-node">S1/S2<br><span style="font-size:0.75em;">Trigger</span></div>
+        <div class="beam-arrow">-></div>
+        <div class="beam-node">DWC<br><span style="font-size:0.75em;">Tracking</span></div>
+        <div class="beam-arrow">-></div>
+        <div class="beam-node">Timepix3<br><span style="font-size:0.75em;">256x256 Si</span></div>
+        <div class="beam-arrow">-></div>
+        <div class="beam-node">Cherenkov<br><span style="font-size:0.75em;">PID</span></div>
+        <div class="beam-arrow">-></div>
+        <div class="beam-node active">4x4 PbGl<br><span style="font-size:0.75em;">Calorimeter</span></div>
+    </div>
+    <div class="sat-grid" style="margin-top:20px;">
+        <div class="sat-card">
+            <div class="icon">&#9889;</div>
+            <div class="name">S1/S2 Scintillators</div>
+            <div class="desc">Coincidence trigger (S1 AND S2)<br>Sub-ns TDC timing<br>Photoelectron counting</div>
+        </div>
+        <div class="sat-card">
+            <div class="icon">&#128208;</div>
+            <div class="name">DWC + Timepix3</div>
+            <div class="desc">3D beam tracking<br>256x256 pixel matrix<br>ToT & ToA readout</div>
+        </div>
+        <div class="sat-card">
+            <div class="icon">&#128309;</div>
+            <div class="name">Gas Cherenkov</div>
+            <div class="desc">Threshold counter (CO2)<br>e-/pi- separation<br>QDC amplitude spectrum</div>
+        </div>
+        <div class="sat-card">
+            <div class="icon">&#128992;</div>
+            <div class="name">4x4 Lead Glass Calo</div>
+            <div class="desc">EM shower profiling<br>16-channel ADC<br>pi0 -> gamma-gamma detection</div>
+        </div>
+        <div class="sat-card">
+            <div class="icon">&#129504;</div>
+            <div class="name">Trigger Logic Board</div>
+            <div class="desc">Multi-stage coincidence<br>Dead-time veto (3.5 ms)<br>Spill-synchronized gate</div>
+        </div>
+        <div class="sat-card">
+            <div class="icon">&#129302;</div>
+            <div class="name">ML PID Satellite</div>
+            <div class="desc">7-feature discriminant<br>Sub-ms inference<br>Online anomaly detection</div>
+        </div>
+    </div>
+</section>
+</section>
+
+<!-- SECTION 3: DAQ ARCHITECTURE -->
+<section>
+<section class="section-divider" data-transition="zoom">
+    <div class="section-number">03</div>
+    <h2>DAQ Architecture</h2>
+    <p style="color:#94a3b8; text-align:center;">Constellation Framework & Data Pipeline</p>
+</section>
+
+<section data-transition="slide">
+    <h2>What is Constellation?</h2>
+    <div class="highlight-box">
+        <p><strong>Constellation</strong> is a decentralized, network-based DAQ framework developed at <strong>DESY/CERN</strong>. Each detector runs as an autonomous <strong>Satellite</strong> process, communicating over ZeroMQ.</p>
+    </div>
+    <div class="two-col" style="margin-top:15px;">
+        <div>
+            <h3>Core Concepts</h3>
+            <ul>
+                <li><strong>Satellites:</strong> Independent detector processes</li>
+                <li><strong>FSM:</strong> NEW -> INIT -> ORBIT -> RUN -> SAFE</li>
+                <li><strong>CDTP:</strong> Binary data transport (ZeroMQ)</li>
+                <li><strong>CSCP:</strong> Control & state management</li>
+                <li><strong>Groups:</strong> Logical network segmentation</li>
+            </ul>
+        </div>
+        <div>
+            <h3>Our Implementation</h3>
+            <ul>
+                <li><strong>8 Custom Satellites</strong> (Python)</li>
+                <li>Geant4/Monte Carlo physics engine</li>
+                <li>Poisson spill-cycle timing model</li>
+                <li>Protocol Buffers serialization</li>
+                <li>Kafka real-time streaming layer</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section data-transition="slide">
+    <h2>End-to-End Data Pipeline</h2>
+    <div class="arch-box detector" style="text-align:center;">
+        <strong>CERN Server (pc-bl4s-07)</strong><br>
+        <span style="font-size:0.8em;">Detector Satellites -> Geant4 Monte Carlo Engine -> 100 Hz event generation</span>
+    </div>
+    <div class="flow-arrow">&#11015;</div>
+    <div class="two-col">
+        <div class="arch-box highlight" style="text-align:center;">
+            <strong>Path A: Lossless Recording</strong><br>
+            <span style="font-size:0.8em;">Constellation CDTP (ZMQ) -> HDF5 Data Writer -> CERNBox/EOS</span>
+        </div>
+        <div class="arch-box kafka" style="text-align:center;">
+            <strong>Path B: Live Streaming</strong><br>
+            <span style="font-size:0.8em;">Protobuf -> Kafka Producer -> SSH Reverse Tunnel (9092)</span>
+        </div>
+    </div>
+    <div class="flow-arrow">&#11015;</div>
+    <div class="arch-box" style="text-align:center; border-color: var(--accent-pink);">
+        <strong>Local Machine (macOS / Linux)</strong><br>
+        <span style="font-size:0.8em;">Kafka Broker (Docker) -> Flask-SocketIO -> WebSocket Push -> Browser UI</span>
+    </div>
+    <div class="flow-arrow">&#11015;</div>
+    <div class="arch-box glow" style="text-align:center; border-color: var(--cern-gold); background: rgba(245,158,11,0.06);">
+        <strong>BL4S Live Event Explorer</strong>
+        <span style="font-size:0.8em;">(Apache ECharts, 10 FPS, Dark UI)</span>
+    </div>
+</section>
+
+<section data-transition="slide">
+    <h2>Protocol Buffers Schema</h2>
+    <p style="font-size:0.8em; color:#94a3b8;">Compact binary serialization for zero-latency Kafka streaming</p>
+    <pre><code class="protobuf" data-trim>
+syntax = "proto3";
+package bl4s;
+
+message BL4SEvent {
+    string sat = 1;
+    oneof event_data {
+        CalorimeterEvent   calorimeter   = 2;  // 16-ch energy + timing
+        ScintillatorEvent  scintillator  = 3;  // PE count + TDC
+        TimepixEvent       timepix       = 4;  // x, y, ToT, ToA
+        CherenkovEvent     cherenkov     = 5;  // QDC amplitude
+        TriggerEvent       trigger       = 6;  // Trigger decision
+        MachineLearningEvent ml          = 7;  // PID prediction
+        PhysicsReconstructionEvent recon = 8;  // M_inv, track fit
+    }
+}
+    </code></pre>
+    <div class="metric-grid" style="grid-template-columns: repeat(3,1fr); margin-top:12px;">
+        <div class="metric-card blue"><div class="value">~50 B</div><div class="label">Avg. Event Size</div></div>
+        <div class="metric-card purple"><div class="value">100 Hz</div><div class="label">Event Rate</div></div>
+        <div class="metric-card green"><div class="value">5 kB/s</div><div class="label">Network Throughput</div></div>
+    </div>
+</section>
+
+<section data-transition="slide">
+    <h2>Satellite Software Architecture</h2>
+    <pre><code class="python" data-trim>
+class CalorimeterSatellite(Geant4ReplaySatellite):
+    """16-channel Lead Glass EM Calorimeter (BL4S PionIST 3)"""
+
+    def generate_physics_event(self) -> bytes:
+        energies = np.zeros(16, dtype=np.float64)
+        # 70% Neutral Pion (pi0 -> gamma + gamma), 30% charged MIP
+        is_pi0 = np.random.rand() > 0.30
+
+        if is_pi0:
+            # Two-photon shower across 4x4 crystal matrix
+            e_pi0 = np.random.uniform(1800, 3800)  # MeV
+
+        # Pack as binary -> Constellation CDTP -> Kafka
+        return struct.pack(...)
+    </code></pre>
+    <p style="font-size:0.75em; color:#94a3b8; margin-top:10px;">All satellites inherit from <code>Geant4ReplaySatellite</code> which handles FSM lifecycle, spill-cycle timing, CDTP transmission, and Kafka streaming in a unified base class.</p>
+</section>
+</section>
+
+<!-- SECTION 4: OBSERVABILITY -->
+<section>
+<section class="section-divider" data-transition="zoom">
+    <div class="section-number">04</div>
+    <h2>Real-Time Observability</h2>
+    <p style="color:#94a3b8; text-align:center;">Beyond Standard Constellation Tools</p>
+</section>
+
+<section data-transition="slide">
+    <h2>Why Build a Custom Observability Stack?</h2>
+    <table>
+        <thead>
+            <tr><th>Capability</th><th>Built-in Constellation</th><th>Our BL4S Stack</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Data Scope</strong></td><td>Single scalars</td><td>Full event payloads (16-ch ADC, 256x256 matrix)</td></tr>
+            <tr><td><strong>Visualization</strong></td><td>Text tables only</td><td>1D Histograms, 2D Heatmaps, Scatter Plots</td></tr>
+            <tr><td><strong>Physics Diagnostics</strong></td><td>"Is process alive?"</td><td>Online PID, shower profiling, beam centering</td></tr>
+            <tr><td><strong>Access</strong></td><td>Requires X11 forwarding</td><td>Any browser (Mac/PC/Tablet)</td></tr>
+            <tr><td><strong>LHC Equivalent</strong></td><td>Basic status monitor</td><td>ATLAS/CMS OHP & DQM Display</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section data-transition="slide">
+    <h2>BL4S Live Event Explorer</h2>
+    <div class="highlight-box" style="text-align:center;">
+        <p><strong>http://localhost:5050</strong> - Web-based Control Room Interface</p>
+        <p style="font-size:0.8em;">HTML5 / Apache ECharts / WebSocket / Dark UI - 10 FPS hardware-accelerated rendering</p>
+    </div>
+    <div class="sat-grid" style="grid-template-columns: repeat(2,1fr); margin-top:15px;">
+        <div class="sat-card">
+            <div class="icon">&#128202;</div>
+            <div class="name">Online Histogram Presenter (OHP)</div>
+            <div class="desc">3x3 grid with 13 channels - live scaler histograms<br>Expandable cards with per-channel statistics</div>
+        </div>
+        <div class="sat-card">
+            <div class="icon">&#127777;</div>
+            <div class="name">DFP Panel & Beamline Flow</div>
+            <div class="desc">Live trigger rate, dead-time %, Kafka throughput<br>Synoptic beamline hardware chain visualization</div>
+        </div>
+        <div class="sat-card">
+            <div class="icon">&#128506;</div>
+            <div class="name">2D Event Display</div>
+            <div class="desc">4x4 Calorimeter heatmap<br>256x256 Timepix beam spot tracking</div>
+        </div>
+        <div class="sat-card">
+            <div class="icon">&#128300;</div>
+            <div class="name">PID & Reconstruction</div>
+            <div class="desc">Cherenkov QDC e-/pi- spectrum<br>pi0 invariant mass histogram</div>
+        </div>
+    </div>
+</section>
+
+<section data-transition="slide">
+    <h2>Grafana Slow Control Dashboard</h2>
+    <div class="two-col">
+        <div>
+            <h3>Prometheus Exporter Satellite</h3>
+            <ul>
+                <li>Scrapes all Constellation satellites</li>
+                <li>Exposes metrics on HTTP <code>:9100</code></li>
+                <li>Forward SSH tunnel to local Prometheus</li>
+                <li>Grafana dashboards at <code>localhost:3000</code></li>
+            </ul>
+            <h3 style="margin-top:15px;">Monitored Metrics</h3>
+            <ul>
+                <li>HV channel states & currents</li>
+                <li>Event rates per satellite</li>
+                <li>Dead-time % & live-time %</li>
+                <li>CPU/RAM usage & Kafka lag</li>
+            </ul>
+        </div>
+        <div>
+            <div class="metric-grid" style="grid-template-columns: repeat(2,1fr);">
+                <div class="metric-card blue"><div class="value">5050</div><div class="label">Event Explorer Port</div></div>
+                <div class="metric-card green"><div class="value">3000</div><div class="label">Grafana Port</div></div>
+                <div class="metric-card purple"><div class="value">9092</div><div class="label">Kafka Broker Port</div></div>
+                <div class="metric-card gold"><div class="value">9100</div><div class="label">Prometheus Port</div></div>
+            </div>
+            <div class="arch-box" style="text-align:center; margin-top:12px;">
+                <strong>Technology Stack</strong><br>
+                <span class="tag tag-blue">Docker</span>
+                <span class="tag tag-green">Prometheus</span>
+                <span class="tag tag-purple">Kafka</span>
+                <span class="tag tag-gold">Grafana</span>
+                <span class="tag tag-pink">Flask-SocketIO</span>
+            </div>
+        </div>
+    </div>
+</section>
+</section>
+
+<!-- SECTION 5: ML & RECONSTRUCTION -->
+<section>
+<section class="section-divider" data-transition="zoom">
+    <div class="section-number">05</div>
+    <h2>Machine Learning & Reconstruction</h2>
+    <p style="color:#94a3b8; text-align:center;">Online PID & pi0 Invariant Mass</p>
+</section>
+
+<section data-transition="slide">
+    <h2>Real-Time ML Particle Identification</h2>
+    <div class="two-col-60-40">
+        <div>
+            <h3>7-Feature Discriminant Analysis</h3>
+            <table>
+                <thead><tr><th>Feature</th><th>Source</th><th>Weight</th></tr></thead>
+                <tbody>
+                    <tr><td>calo_e_total</td><td>Calorimeter</td><td>21%</td></tr>
+                    <tr><td>cherenkov_qdc</td><td>Cherenkov</td><td>21%</td></tr>
+                    <tr><td>timepix_tot</td><td>Timepix3</td><td>18%</td></tr>
+                    <tr><td>timepix_cluster_size</td><td>Timepix3</td><td>17%</td></tr>
+                    <tr><td>calo_shower_radius</td><td>Calorimeter</td><td>14%</td></tr>
+                    <tr><td>beta_velocity</td><td>ToF</td><td>5%</td></tr>
+                    <tr><td>tof_ns</td><td>Scintillators</td><td>4%</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <div class="metric-grid" style="grid-template-columns: 1fr;">
+                <div class="metric-card green"><div class="value">98.2%</div><div class="label">Classification Accuracy</div></div>
+                <div class="metric-card blue"><div class="value">&lt; 50 us</div><div class="label">Inference Latency</div></div>
+                <div class="metric-card purple"><div class="value">6</div><div class="label">Particle Classes</div></div>
+            </div>
+            <div style="margin-top:10px; font-size:0.75em; color:#94a3b8;">
+                Classes: e-, mu-, pi-, p, pi0, noise<br>
+                Model: Quadratic Discriminant + Mahalanobis distance anomaly detection
+            </div>
+        </div>
+    </div>
+</section>
+
+<section data-transition="slide">
+    <h2>Online pi0 Reconstruction</h2>
+    <div class="highlight-box">
+        <h3>PhysicsReconstructionSatellite</h3>
+        <p>Performs real-time invariant mass calculation and 3D track fitting across three detector planes.</p>
+    </div>
+    <div class="two-col" style="margin-top:15px;">
+        <div>
+            <h3>pi0 -> gamma-gamma Invariant Mass</h3>
+            <pre><code class="python" data-trim style="font-size:0.6em;">
+# Find 2 highest clusters in 4x4 matrix
+# Calculate opening angle from positions
+cos_theta = (x1*x2 + y1*y2 + L^2) / (d1*d2)
+
+# Invariant mass reconstruction
+M_inv = sqrt(2 * E1 * E2 * (1 - cos_theta))
+# Expected: M_pi0 ~ 135.0 MeV/c^2
+            </code></pre>
+        </div>
+        <div>
+            <h3>3D Linear Track Fit</h3>
+            <pre><code class="python" data-trim style="font-size:0.6em;">
+# 3 tracking stations:
+# DWC1 (z=0) -> DWC2 (z=1000mm) -> Timepix (z=2200mm)
+
+slope_x, intercept = polyfit(z, x, 1)
+
+# Momentum from magnetic deflection:
+p = (0.3 * B * L) / sin(theta)  # GeV/c
+            </code></pre>
+        </div>
+    </div>
+</section>
+</section>
+
+<!-- SECTION 6: TRIGGER -->
+<section>
+<section data-transition="slide">
+    <h2>Advanced Trigger Logic</h2>
+    <div class="highlight-box">
+        <h3>Multi-Stage Hardware Coincidence Simulation</h3>
+        <p>Full NIM-logic coincidence: <strong>S1 AND S2 AND [NOT BUSY] AND [Cherenkov TAG]</strong></p>
+    </div>
+    <div class="two-col" style="margin-top:12px;">
+        <div>
+            <h3>Trigger Decision Flow</h3>
+            <ol style="font-size:0.8em;">
+                <li class="fragment fade-in-then-semi-out">Particle enters -> S1/S2 fire (Poisson PE)</li>
+                <li class="fragment fade-in-then-semi-out">Check timing: |t_S1 - t_S2| &lt;= 10 ns</li>
+                <li class="fragment fade-in-then-semi-out">Check DAQ BUSY inhibit gate</li>
+                <li class="fragment fade-in-then-semi-out">If free -> TRIGGER ACCEPTED</li>
+                <li class="fragment fade-in-then-semi-out">Set BUSY for 3.5 ms (readout dead-time)</li>
+            </ol>
+        </div>
+        <div>
+            <div class="metric-grid" style="grid-template-columns: 1fr;">
+                <div class="metric-card green"><div class="value">~92%</div><div class="label">Trigger Efficiency</div></div>
+                <div class="metric-card gold"><div class="value">3.5 ms</div><div class="label">Dead-time per Event</div></div>
+                <div class="metric-card pink"><div class="value">+-10 ns</div><div class="label">Coincidence Window</div></div>
+            </div>
+        </div>
+    </div>
+</section>
+</section>
+
+<!-- SYSTEM OVERVIEW -->
+<section>
+<section data-transition="slide">
+    <h2>System at a Glance</h2>
+    <div class="metric-grid">
+        <div class="metric-card blue"><div class="value">8</div><div class="label">Detector Satellites</div></div>
+        <div class="metric-card purple"><div class="value">13</div><div class="label">OHP Channels</div></div>
+        <div class="metric-card green"><div class="value">~6,000</div><div class="label">Lines of Python</div></div>
+        <div class="metric-card gold"><div class="value">240 KB</div><div class="label">Event Explorer UI</div></div>
+    </div>
+    <div class="metric-grid" style="margin-top:5px;">
+        <div class="metric-card pink"><div class="value">7</div><div class="label">ML Features</div></div>
+        <div class="metric-card blue"><div class="value">6</div><div class="label">Particle Classes</div></div>
+        <div class="metric-card green"><div class="value">Protobuf</div><div class="label">Wire Format</div></div>
+        <div class="metric-card purple"><div class="value">HDF5</div><div class="label">Storage Format</div></div>
+    </div>
+    <div class="arch-box" style="text-align:center; margin-top:15px;">
+        <strong>Full Stack:</strong>
+        <span class="tag tag-blue">Constellation</span>
+        <span class="tag tag-green">ZeroMQ</span>
+        <span class="tag tag-purple">Kafka</span>
+        <span class="tag tag-gold">Protobuf</span>
+        <span class="tag tag-pink">Flask-SocketIO</span>
+        <span class="tag tag-blue">ECharts</span>
+        <span class="tag tag-green">Prometheus</span>
+        <span class="tag tag-gold">Grafana</span>
+        <span class="tag tag-purple">Docker</span>
+        <span class="tag tag-pink">HDF5</span>
+    </div>
+</section>
+</section>
+
+<!-- DEMO -->
+<section>
+<section class="section-divider" data-transition="zoom">
+    <div class="section-number">06</div>
+    <h2>Live Demo</h2>
+    <p style="color:#94a3b8; text-align:center;">Event Explorer - OHP - DFP - PID Spectra</p>
+</section>
+
+<section data-transition="slide">
+    <h2>Live System Demonstration</h2>
+    <div class="highlight-box" style="text-align:center;">
+        <h3>Switching to Live Event Explorer...</h3>
+        <p style="font-size:1.2em;"><a href="http://localhost:5050" target="_blank" style="color:var(--accent-cyan);">http://localhost:5050</a></p>
+        <p style="font-size:0.8em; color:#94a3b8; margin-top:10px;">
+            OHP (13-channel scaler grid) - DFP (beamline flow) - Calorimeter heatmap - Timepix beam spot - Cherenkov PID spectrum
+        </p>
+    </div>
+</section>
+</section>
+
+<!-- FUTURE -->
+<section data-transition="slide">
+    <h2>From Simulation to Real Data</h2>
+    <div class="two-col">
+        <div>
+            <h3 style="color:#10b981;">Completed (Simulation)</h3>
+            <ul style="font-size:0.8em;">
+                <li>Full Constellation DAQ framework</li>
+                <li>8 detector satellites with Geant4 physics</li>
+                <li>Kafka + Protobuf streaming pipeline</li>
+                <li>Web-based Event Explorer (OHP + DFP)</li>
+                <li>ML PID (98.2% accuracy)</li>
+                <li>Online pi0 reconstruction</li>
+                <li>Grafana slow-control dashboard</li>
+                <li>HDF5 offline analysis scripts</li>
+            </ul>
+        </div>
+        <div>
+            <h3 style="color:#f59e0b;">Next: Real Beam (T9)</h3>
+            <ul style="font-size:0.8em;">
+                <li>Replace <code>generate_physics_event()</code> with real VME readout (CAEN V792/V775)</li>
+                <li>Deploy on SBC or Readout PC via SSH</li>
+                <li>Calibrate Cherenkov gas pressure for e-/pi- threshold</li>
+                <li>Validate pi0 invariant mass with real photon showers</li>
+                <li>Tune ML model with labeled beam data</li>
+            </ul>
+            <div class="arch-box" style="margin-top:12px; text-align:center; border-color:#f59e0b;">
+                <strong>Key Advantage:</strong> The entire software stack is ready - only the hardware interface layer changes.
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- THANK YOU -->
+<section class="title-slide" data-transition="zoom">
+    <h1 style="font-size:2.4em;">Thank You</h1>
+    <p class="subtitle" style="font-size:1em;">Team PionIST 3 - BL4S 2026</p>
+    <div style="margin-top:30px;">
+        <span class="tag tag-blue" style="font-size:0.9em; padding:6px 14px;">GitHub: KayraYavuz/Constellation-DAQ</span>
+    </div>
+    <div style="margin-top:20px;">
+        <span class="tag tag-green" style="font-size:0.9em; padding:6px 14px;">Event Explorer: localhost:5050</span>
+        <span class="tag tag-purple" style="font-size:0.9em; padding:6px 14px;">Grafana: localhost:3000</span>
+    </div>
+    <p style="margin-top:40px; font-size:0.8em; color:#64748b;">
+        Questions & Discussion
+    </p>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    controls: true,
+    progress: true,
+    center: false,
+    width: 1280,
+    height: 720,
+    margin: 0.06,
+    plugins: [ RevealHighlight ]
+});
+</script>
+</body>
+</html>

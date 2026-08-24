@@ -164,4 +164,75 @@ rate = 100.0
 That's it! The next time they run the `./start_all.sh` command, their new satellite will automatically join the network and appear on the MissionControl screen.
 
 ---
+
+## 🔌 Part 6: Simülasyondan Gerçek Deneye Geçiş (C++ Dedektörlerini Bağlama)
+
+CERN T9 hüzme hattına gittiğinizde, `Mock` ve simülasyon uydularının yerini gerçek donanım okuma kodları (VME, CAEN, Timepix C++ kütüphaneleri) alacaktır.
+
+Mevcut C++ donanım sürücülerinizi sisteme entegre etmenin **2 kolay yolu** vardır:
+
+### 1. Yol: Doğrudan C++ Constellation Uydusu Yazmak (Önerilen)
+Constellation'ın çekirdeği C++ ile yazılmıştır. Donanım kütüphanesini (`libCAENVME.so` vb.) C++ uydusuyla derleyip sıfır gecikmeyle çalıştırabilirsiniz:
+```cpp
+#include "constellation/core/satellite/Satellite.hpp"
+#include "caen_vme_driver.h"
+
+class CalorimeterSatellite : public constellation::satellite::Satellite {
+    void running(const std::stop_token& stop_token) override {
+        while (!stop_token.stop_requested()) {
+            std::vector<uint32_t> data = read_vme_fifo();
+            auto record = create_data_record();
+            record.add_block(data.data(), data.size() * sizeof(uint32_t));
+            send_data_record(std::move(record));
+        }
+    }
+};
+```
+
+### 2. Yol: Python Uydusu İçinden C++ Kütüphanesini Çağırmak (`ctypes`)
+Mevcut Python uydularınızı bozmadan, C++ kodunuzu `.so` kütüphanesi yapıp Python içinden donanımı okutabilirsiniz:
+```python
+import ctypes
+c_lib = ctypes.CDLL("./libcaen_reader.so")
+
+class CalorimeterSatellite(Geant4ReplaySatellite):
+    def generate_physics_event(self) -> bytes:
+        buf = (ctypes.c_uint16 * 16)()
+        c_lib.read_vme_calorimeter(buf) # Gerçek VME kartından oku
+        return bytes(buf)
+```
+
+> 🎯 **En Büyük Avantaj:** Sistem tamamen modüler olduğu için; Kafka, Protobuf, Web Event Explorer UI (`localhost:5050`) veya Grafana tarafında tek bir satır kod bile değiştirmeden gerçek deney verisini canlı olarak izlemeye devam edersiniz!
+
+---
+
+## ⚡ Part 7: Yüksek Gerilim (HV) Kontrolü: CAEN SY5527 ve Web GECO
+
+Kalorimetre (16 kristal), Cherenkov ve Sintilatör dedektörlerinin çalışması için gereken yüksek gerilim (**-1500V ile +2500V** arası), kontrol odasındaki **CAEN SY5527 High Voltage Mainframe** tarafından sağlanır.
+
+Normalde fizikçiler kasanın başına gidip masaüstü programı (GECO 2020) açmak zorundadır. Bizim geliştirdiğimiz sistemde ise bu süreç tamamen otomatikleştirilmiş ve web arayüzüne taşınmıştır:
+
+```
+[ CAEN SY5527 Yüksek Gerilim Kasası (Donanım) ]
+                     │ (Doğrudan Yerel Ethernet Ağı)
+                     ▼
+[ SlowControlSatellite.py (CERN Sunucusu) ]
+  - CAENHVWrapper Kütüphanesi ile haberleşir
+  - SetVoltage(ch, 1500), GetStatus() komutlarını yönetir
+  - Ramp-Up / Ramp-Down (50 V/s) ve Overcurrent TRIP güvenliğini sağlar
+                     │ (WebSocket + Prometheus)
+                     ▼
+[ Birleşik Web Kontrol Odası ]
+  👉 http://localhost:5050 (Web Tabanlı GECO Paneli)
+  👉 http://localhost:3000 (Grafana Slow Control Göstergeleri)
+```
+
+### Nasıl Çalışır?
+1. **Doğrudan Donanım Bağlantısı:** `CAEN SY5527` kasası kontrol odasındaki yerel ağa (Ethernet) bağlıdır.
+2. **Kütüphane İletişimi:** CERN sunucusundaki `SlowControlSatellite`, CAEN'in sunduğu resmi `CAENHVWrapper` (C/Python) kütüphanesi üzerinden kasaya doğrudan komut gönderir.
+3. **Ekstra Yazılıma İhtiyaç Yok:** Shifter veya deneyi izleyen herhangi bir araştırmacı, bilgisayarına hiçbir özel masaüstü programı yüklemeden tarayıcısından (`localhost:5050`) kanalları açıp kapatabilir (`ON/OFF`), hedef voltajı ayarlayabilir ve akım/voltaj grafiğini canlı izleyebilir.
+
+---
 *You did it! You now know how a professional DAQ system is set up, orchestrated, and monitored live!* 🚀
+
+
