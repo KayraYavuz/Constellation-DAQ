@@ -2,6 +2,9 @@ build/
 *.so
 *.o
 *.root
+*.log
+__pycache__/
+*.pyc
 .python_history
-generate_calorimeter.py
-fix_build.py
+.DS_Store
+

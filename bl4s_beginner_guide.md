@@ -165,14 +165,14 @@ That's it! The next time they run the `./start_all.sh` command, their new satell
 
 ---
 
-## 🔌 Part 6: Simülasyondan Gerçek Deneye Geçiş (C++ Dedektörlerini Bağlama)
+## 🔌 Part 6: Transitioning from Simulation to Real Experiment (Connecting C++ Detectors)
 
-CERN T9 hüzme hattına gittiğinizde, `Mock` ve simülasyon uydularının yerini gerçek donanım okuma kodları (VME, CAEN, Timepix C++ kütüphaneleri) alacaktır.
+When deploying at the CERN T9 beamline, mock/simulation satellites are replaced with actual hardware readout drivers (VME, CAEN, Timepix C++ libraries).
 
-Mevcut C++ donanım sürücülerinizi sisteme entegre etmenin **2 kolay yolu** vardır:
+There are **two straightforward approaches** to interface your C++ drivers:
 
-### 1. Yol: Doğrudan C++ Constellation Uydusu Yazmak (Önerilen)
-Constellation'ın çekirdeği C++ ile yazılmıştır. Donanım kütüphanesini (`libCAENVME.so` vb.) C++ uydusuyla derleyip sıfır gecikmeyle çalıştırabilirsiniz:
+### Method 1: Native C++ Constellation Satellite (Recommended)
+Constellation core is natively written in modern C++. You can link vendor libraries (`libCAENVME.so`) directly inside a C++ satellite for zero-copy latency:
 ```cpp
 #include "constellation/core/satellite/Satellite.hpp"
 #include "caen_vme_driver.h"
@@ -189,8 +189,8 @@ class CalorimeterSatellite : public constellation::satellite::Satellite {
 };
 ```
 
-### 2. Yol: Python Uydusu İçinden C++ Kütüphanesini Çağırmak (`ctypes`)
-Mevcut Python uydularınızı bozmadan, C++ kodunuzu `.so` kütüphanesi yapıp Python içinden donanımı okutabilirsiniz:
+### Method 2: Python Satellite with C++ Wrapper (`ctypes`)
+Without modifying existing Python satellites, compile your C++ driver into a `.so` shared library and invoke it directly from Python:
 ```python
 import ctypes
 c_lib = ctypes.CDLL("./libcaen_reader.so")
@@ -198,41 +198,42 @@ c_lib = ctypes.CDLL("./libcaen_reader.so")
 class CalorimeterSatellite(Geant4ReplaySatellite):
     def generate_physics_event(self) -> bytes:
         buf = (ctypes.c_uint16 * 16)()
-        c_lib.read_vme_calorimeter(buf) # Gerçek VME kartından oku
+        c_lib.read_vme_calorimeter(buf) # Direct hardware readout
         return bytes(buf)
 ```
 
-> 🎯 **En Büyük Avantaj:** Sistem tamamen modüler olduğu için; Kafka, Protobuf, Web Event Explorer UI (`localhost:5050`) veya Grafana tarafında tek bir satır kod bile değiştirmeden gerçek deney verisini canlı olarak izlemeye devam edersiniz!
+> 🎯 **Key Advantage:** Because the architecture is completely decoupled and modular, not a single line of code needs to change in Kafka, Protobuf, the Web Event Explorer UI (`localhost:5050`), or Grafana!
 
 ---
 
-## ⚡ Part 7: Yüksek Gerilim (HV) Kontrolü: CAEN SY5527 ve Web GECO
+## ⚡ Part 7: High Voltage (HV) Control: CAEN SY5527 and Web GECO
 
-Kalorimetre (16 kristal), Cherenkov ve Sintilatör dedektörlerinin çalışması için gereken yüksek gerilim (**-1500V ile +2500V** arası), kontrol odasındaki **CAEN SY5527 High Voltage Mainframe** tarafından sağlanır.
+The detector chain (16-channel Calorimeter crystals, Cherenkov, Scintillators) requires stable high voltage (**-1500V to +2500V**) provided by the **CAEN SY5527 High Voltage Mainframe** located in the control room.
 
-Normalde fizikçiler kasanın başına gidip masaüstü programı (GECO 2020) açmak zorundadır. Bizim geliştirdiğimiz sistemde ise bu süreç tamamen otomatikleştirilmiş ve web arayüzüne taşınmıştır:
+Instead of requiring physicists to install standalone desktop software (GECO 2020), our system integrates slow control directly into the web platform:
 
 ```
-[ CAEN SY5527 Yüksek Gerilim Kasası (Donanım) ]
-                     │ (Doğrudan Yerel Ethernet Ağı)
+[ CAEN SY5527 High Voltage Mainframe (Hardware) ]
+                     │ (Direct Local Ethernet Network)
                      ▼
-[ SlowControlSatellite.py (CERN Sunucusu) ]
-  - CAENHVWrapper Kütüphanesi ile haberleşir
-  - SetVoltage(ch, 1500), GetStatus() komutlarını yönetir
-  - Ramp-Up / Ramp-Down (50 V/s) ve Overcurrent TRIP güvenliğini sağlar
+[ SlowControlSatellite.py (CERN Server) ]
+  - Communicates via official CAENHVWrapper Library
+  - Handles SetVoltage(ch, 1500), GetStatus() commands
+  - Enforces Ramp-Up / Ramp-Down (50 V/s) and Overcurrent TRIP safety
                      │ (WebSocket + Prometheus)
                      ▼
-[ Birleşik Web Kontrol Odası ]
-  👉 http://localhost:5050 (Web Tabanlı GECO Paneli)
-  👉 http://localhost:3000 (Grafana Slow Control Göstergeleri)
+[ Unified Control Room ]
+  👉 http://localhost:5050 (Web-Based GECO Panel)
+  👉 http://localhost:3000 (Grafana Slow Control Dashboard)
 ```
 
-### Nasıl Çalışır?
-1. **Doğrudan Donanım Bağlantısı:** `CAEN SY5527` kasası kontrol odasındaki yerel ağa (Ethernet) bağlıdır.
-2. **Kütüphane İletişimi:** CERN sunucusundaki `SlowControlSatellite`, CAEN'in sunduğu resmi `CAENHVWrapper` (C/Python) kütüphanesi üzerinden kasaya doğrudan komut gönderir.
-3. **Ekstra Yazılıma İhtiyaç Yok:** Shifter veya deneyi izleyen herhangi bir araştırmacı, bilgisayarına hiçbir özel masaüstü programı yüklemeden tarayıcısından (`localhost:5050`) kanalları açıp kapatabilir (`ON/OFF`), hedef voltajı ayarlayabilir ve akım/voltaj grafiğini canlı izleyebilir.
+### How It Works:
+1. **Direct Hardware Connection:** The `CAEN SY5527` mainframe is connected to the local control room Ethernet network.
+2. **Library Interface:** `SlowControlSatellite` communicates via the official `CAENHVWrapper` (C/Python) library.
+3. **Zero Software Installation:** Shifters and collaborators can toggle channels (`ON/OFF`), set target voltages, and monitor real-time current/voltage curves directly from any browser at `localhost:5050`.
 
 ---
 *You did it! You now know how a professional DAQ system is set up, orchestrated, and monitored live!* 🚀
+
 
 
