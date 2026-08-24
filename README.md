@@ -317,13 +317,36 @@ Once all systems are running, open your browser and navigate to:
 
 > **Important:** If you see "Waiting for live data..." or graphs aren't rendering, perform a **Hard Refresh** (`Cmd + Shift + R` or `Ctrl + Shift + R`) to clear browser caches.
 
-### Step 4: Orchestrating in MissionControl (Optional)
-If you are managing the DAQ state manually via MissionControl:
+### Step 4: Orchestrating in MissionControl (GUI)
+If you are managing the DAQ state manually via the MissionControl graphical interface:
 * Connect to group `bl4s`.
 * Click **Load Config** (`bl4s_config.toml`).
 * Click **Initialize** (Satellites turn Green / `INIT`).
 * Click **Launch** (Satellites turn Light Blue / `ORBIT`).
 * Click **Start** (Satellites turn Dark Blue / `RUN`).
+* When finished, click **Stop** (Satellites transition back to `ORBIT`, properly finalizing and sealing the `.h5` file).
+
+### Step 5: Automated & Timed Runs via ConstellationCommander (CLI / Headless)
+For automated test beam shifts or overnight data collection where a graphical UI is not desired, use the official **`ConstellationCommander`** command-line controller. 
+
+Once satellites are running via `./start_all.sh`, execute:
+
+```bash
+# 1. Initialize satellites with the configuration file
+ConstellationCommander -g bl4s initialize bl4s_config.toml
+
+# 2. Launch satellites into ORBIT state
+ConstellationCommander -g bl4s launch
+
+# 3. Start a timed acquisition run (e.g., 1 Hour = 3600 seconds)
+ConstellationCommander -g bl4s start --duration 3600
+
+# For a 4-hour overnight shift (14400 seconds):
+ConstellationCommander -g bl4s start --duration 14400
+```
+
+> **How Timed Runs Work:** 
+> When the duration timer expires, `ConstellationCommander` automatically issues a transition to `STOP`. The `SatelliteH5DataWriter` safely flushes memory buffers, closes HDF5 datasets (`h5close`), and unseals the file, ensuring 100% data integrity before cloud/EOS archiving without manual intervention.
 
 ---
 

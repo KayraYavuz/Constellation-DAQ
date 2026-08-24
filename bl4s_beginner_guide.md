@@ -82,6 +82,22 @@ To give the "Get Ready and Start" command to all satellites, open the **MissionC
 5. Click the **Start** button. (Dark blue - `RUN`). 
 🎉 **Congratulations! Right now, hundreds of particle collisions are being simulated every second, and the data is flowing to your Mac!**
 
+### Step 5: Automated & Timed Runs via ConstellationCommander (CLI)
+If you want to run a timed data taking session automatically (e.g. leaving the DAQ running for 1 hour overnight without needing a GUI screen):
+
+After `./start_all.sh` is started, run in your terminal:
+```bash
+# 1. Initialize satellites with configuration
+ConstellationCommander -g bl4s initialize bl4s_config.toml
+
+# 2. Launch satellites into ORBIT state
+ConstellationCommander -g bl4s launch
+
+# 3. Start a timed acquisition run (e.g., 3600 seconds = 1 hour)
+ConstellationCommander -g bl4s start --duration 3600
+```
+When the timer expires, `ConstellationCommander` automatically sends the `STOP` signal, flushes the data buffer to disk, and securely seals the `.h5` file ready for archiving.
+
 ---
 
 ## 📊 Part 4: Live Data Monitoring (The Fun Part!)
