@@ -1,6 +1,7 @@
 [H5DataWriter.pc_bl4s_07]
-output_directory = "/home/kayra/bl4s_simulation"
+output_directory = "/eos/user/k/kayra/bl4s_data"
 flush_interval = 10.0
+
 
 [TriggerModuleSatellite.pc_bl4s_07]
 raw_rate = 120.0

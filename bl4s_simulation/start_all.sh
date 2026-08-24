@@ -6,8 +6,9 @@ pkill -9 -f "bl4s_satellites" 2>/dev/null || true
 pkill -9 -f "SatelliteH5DataWriter" 2>/dev/null || true
 pkill -9 -f "bl4s_event_explorer_server" 2>/dev/null || true
 
-# 1.5. Move old data to archive and clear python cache
-echo "[1/5] Moving old data to archive and clearing cache..."
+# 1.5. Ensure CERNBox EOS directory exists & clear python cache
+echo "[1/5] Ensuring CERNBox EOS storage directory and clearing cache..."
+mkdir -p /eos/user/k/kayra/bl4s_data 2>/dev/null || true
 mkdir -p /home/kayra/bl4s_simulation/old_data
 mv /home/kayra/bl4s_simulation/*.h5 /home/kayra/bl4s_simulation/old_data/ 2>/dev/null || true
 find /home/kayra/bl4s_simulation -name "*.pyc" -delete 2>/dev/null || true
