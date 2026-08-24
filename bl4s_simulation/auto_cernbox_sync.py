@@ -11,17 +11,14 @@ import shutil
 import glob
 
 DATA_DIR = "/home/kayra/bl4s_simulation/data"
+OLD_DATA_DIR = "/home/kayra/bl4s_simulation/old_data"
 EOS_DIR = "/eos/user/k/kyavuz/bl4s_data"
 
 def sync_loop():
-    print(f"[CERNBox-Sync] Monitoring {DATA_DIR} -> {EOS_DIR} ...")
-    synced_files = set()
+    print(f"[CERNBox-Sync] Monitoring {DATA_DIR} -> {EOS_DIR} & archiving to {OLD_DATA_DIR} ...")
+    os.makedirs(OLD_DATA_DIR, exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
     
-    # Initialize with existing files so we don't spam
-    if os.path.exists(EOS_DIR):
-        for f in glob.glob(os.path.join(EOS_DIR, "*.h5")):
-            synced_files.add(os.path.basename(f))
-
     while True:
         try:
             if not os.path.exists(EOS_DIR):
@@ -31,26 +28,31 @@ def sync_loop():
             for src_path in h5_files:
                 filename = os.path.basename(src_path)
                 dest_path = os.path.join(EOS_DIR, filename)
+                archive_path = os.path.join(OLD_DATA_DIR, filename)
                 
-                # Check file size stability (ensure H5 is sealed/written)
+                # Check file size stability (ensure H5 is sealed/closed by STOP)
                 try:
                     size1 = os.path.getsize(src_path)
-                    time.sleep(1.0)
+                    time.sleep(1.5)
                     size2 = os.path.getsize(src_path)
                     
-                    # If size is stable and not in sync set or size changed
+                    # If size is completely stable and file is ready
                     if size1 == size2 and size1 > 0:
-                        if filename not in synced_files or not os.path.exists(dest_path) or os.path.getsize(dest_path) != size1:
-                            shutil.copy2(src_path, dest_path)
-                            synced_files.add(filename)
-                            print(f"[CERNBox-Sync] Successfully uploaded {filename} ({size1 / (1024*1024):.2f} MB) to CERNBox!")
+                        # 1. Upload to CERNBox
+                        shutil.copy2(src_path, dest_path)
+                        print(f"[CERNBox-Sync] Successfully uploaded {filename} ({size1 / (1024*1024):.2f} MB) to CERNBox!")
+                        
+                        # 2. Move to old_data so data/ directory stays clean for new runs
+                        shutil.move(src_path, archive_path)
+                        print(f"[CERNBox-Sync] Moved {filename} -> {OLD_DATA_DIR}/")
                 except Exception as e:
-                    # File might still be locked by H5Writer
+                    # File is still actively written by H5DataWriter
                     pass
         except Exception as e:
             pass
         
         time.sleep(3.0)
+
 
 if __name__ == "__main__":
     sync_loop()
