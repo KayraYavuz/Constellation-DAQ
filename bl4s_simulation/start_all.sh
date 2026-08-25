@@ -12,9 +12,15 @@ mkdir -p /home/kayra/bl4s_simulation/data
 mkdir -p /home/kayra/bl4s_simulation/old_data
 mkdir -p /eos/user/k/kyavuz/bl4s_data 2>/dev/null || true
 
-# Copy all generated runs to CERNBox if accessible (startup sync)
-xrdcp --silent /home/kayra/bl4s_simulation/data/*.h5 "root://eosuser.cern.ch//eos/user/k/kyavuz/bl4s_data/" 2>/dev/null || \
-  cp -f /home/kayra/bl4s_simulation/data/*.h5 /eos/user/k/kyavuz/bl4s_data/ 2>/dev/null || true
+# Copy any unsynced runs to CERNBox old_data/ subfolder (startup sync)
+mkdir -p /eos/user/k/kyavuz/bl4s_data/old_data 2>/dev/null || true
+xrdfs eosuser.cern.ch mkdir -p /eos/user/k/kyavuz/bl4s_data/old_data 2>/dev/null || true
+for f in /home/kayra/bl4s_simulation/data/*.h5 /home/kayra/bl4s_simulation/old_data/*.h5; do
+    [ -f "$f" ] || continue
+    fname=$(basename "$f")
+    xrdcp --silent "$f" "root://eosuser.cern.ch//eos/user/k/kyavuz/bl4s_data/old_data/$fname" 2>/dev/null || \
+      cp -f "$f" "/eos/user/k/kyavuz/bl4s_data/old_data/$fname" 2>/dev/null || true
+done
 
 # Archive old data locally (move to old_data/ before new run)
 mv /home/kayra/bl4s_simulation/data/*.h5 /home/kayra/bl4s_simulation/old_data/ 2>/dev/null || true
