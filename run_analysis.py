@@ -39,15 +39,15 @@ NO_DATA_MARKERS = [
     "Events parsed: 0", "total_hits == 0", "total_events == 0",
 ]
 
-def run_script(script_name, h5_file):
+def run_script(script_name, h5_file, out_dir=None):
     script_path = os.path.join(SCRIPT_DIR, script_name)
     if not os.path.exists(script_path):
         print(f"  {YELLOW}[SKIP]{RESET} Script not found: {script_path}")
         return "skip"
-    result = subprocess.run(
-        [sys.executable, script_path, h5_file],
-        capture_output=True, text=True
-    )
+    cmd = [sys.executable, script_path, h5_file]
+    if out_dir:
+        cmd.append(out_dir)
+    result = subprocess.run(cmd, capture_output=True, text=True)
     combined = result.stdout + result.stderr
     if result.returncode == 0:
         for line in result.stdout.splitlines():
@@ -64,26 +64,39 @@ def run_script(script_name, h5_file):
             print(f"     {line}")
         return "fail"
 
-def analyze_file(h5_file):
+def analyze_file(h5_file, out_dir=None):
     fname = os.path.basename(h5_file)
     print(f"\n{BOLD}{YELLOW}▶ {fname}{RESET}")
     print(f"  Path: {h5_file}")
+    if out_dir:
+        print(f"  Output: {out_dir}")
     results = {}
     for script, label in ANALYSIS_SCRIPTS:
         print(f"  [{label}]", end=" ", flush=True)
-        ok = run_script(script, h5_file)
+        ok = run_script(script, h5_file, out_dir)
         results[label] = ok
     return results
 
 def main():
     banner()
 
-    if len(sys.argv) > 1:
-        target = sys.argv[1].strip().strip('"').strip("'")
+    # Usage: run_analysis.py <file_or_dir> [--out <output_dir>]
+    args = sys.argv[1:]
+    out_dir = None
+    if "--out" in args:
+        idx = args.index("--out")
+        if idx + 1 < len(args):
+            out_dir = os.path.expanduser(args.pop(idx + 1))
+            args.pop(idx)
+            os.makedirs(out_dir, exist_ok=True)
+
+    if args:
+        target = args[0].strip().strip('"').strip("'")
     else:
         target = input(
-            "Enter path to .h5 file or directory containing .h5 files:\n> "
+            "Enter path to .h5 file or directory:\n> "
         ).strip().strip('"').strip("'")
+    target = os.path.expanduser(target)
 
     # Determine list of h5 files
     if os.path.isfile(target) and target.endswith(".h5"):
@@ -97,11 +110,13 @@ def main():
         print(f"{RED}Path not found or not a .h5 file: {target}{RESET}")
         sys.exit(1)
 
+    if out_dir:
+        print(f"Output directory: {BOLD}{out_dir}{RESET}")
     print(f"Found {BOLD}{len(h5_files)}{RESET} .h5 file(s) to analyze.\n")
 
     all_results = {}
     for h5_file in h5_files:
-        all_results[h5_file] = analyze_file(h5_file)
+        all_results[h5_file] = analyze_file(h5_file, out_dir)
 
     # Summary table
     print(f"\n{BOLD}{CYAN}{'='*60}")

@@ -54,7 +54,12 @@ else:
 if not os.path.exists(h5_path):
     print(f"[ERROR] File not found: {h5_path}"); sys.exit(1)
 
-out_dir = os.path.dirname(os.path.abspath(h5_path))
+if len(sys.argv) > 2:
+    out_dir = os.path.expanduser(sys.argv[2].strip())
+    os.makedirs(out_dir, exist_ok=True)
+else:
+    out_dir = os.path.dirname(os.path.abspath(h5_path))
+
 run_name = os.path.splitext(os.path.basename(h5_path))[0]
 
 # ── Parse HDF5 ────────────────────────────────────────────────────────────────
