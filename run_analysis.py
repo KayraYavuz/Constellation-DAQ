@@ -34,26 +34,35 @@ def banner():
     print(f"  CERN PS T9 | Constellation DAQ")
     print(f"{'='*60}{RESET}\n")
 
+NO_DATA_MARKERS = [
+    "No QDC data found", "No calorimeter data found", "No TimePix data found",
+    "Events parsed: 0", "total_hits == 0", "total_events == 0",
+]
+
 def run_script(script_name, h5_file):
     script_path = os.path.join(SCRIPT_DIR, script_name)
     if not os.path.exists(script_path):
-        print(f"  {RED}[SKIP]{RESET} Script not found: {script_path}")
-        return False
+        print(f"  {YELLOW}[SKIP]{RESET} Script not found: {script_path}")
+        return "skip"
     result = subprocess.run(
         [sys.executable, script_path, h5_file],
         capture_output=True, text=True
     )
+    combined = result.stdout + result.stderr
     if result.returncode == 0:
-        # Print only "Saved:" lines from output
         for line in result.stdout.splitlines():
             if "Saved:" in line or "Complete" in line:
                 print(f"  {GREEN}✔{RESET}  {line.strip()}")
-        return True
+        return "ok"
     else:
+        # Check if it's just "no data" — treat as skip, not error
+        if any(marker in combined for marker in NO_DATA_MARKERS):
+            print(f"  {YELLOW}—  No data in this run (detector may have been inactive){RESET}")
+            return "skip"
         print(f"  {RED}✘  Failed:{RESET}")
-        for line in (result.stderr or result.stdout).splitlines()[-5:]:
+        for line in combined.splitlines()[-5:]:
             print(f"     {line}")
-        return False
+        return "fail"
 
 def analyze_file(h5_file):
     fname = os.path.basename(h5_file)
@@ -99,30 +108,42 @@ def main():
     print("  SUMMARY")
     print(f"{'='*60}{RESET}")
     total_ok = 0
+    total_skip = 0
     total_fail = 0
     for h5_file, results in all_results.items():
         fname = os.path.basename(h5_file)
-        ok_labels   = [l for l, ok in results.items() if ok]
-        fail_labels = [l for l, ok in results.items() if not ok]
+        ok_labels   = [l for l, r in results.items() if r == "ok"]
+        skip_labels = [l for l, r in results.items() if r == "skip"]
+        fail_labels = [l for l, r in results.items() if r == "fail"]
         total_ok   += len(ok_labels)
+        total_skip += len(skip_labels)
         total_fail += len(fail_labels)
-        status = f"{GREEN}✔{RESET}" if not fail_labels else f"{RED}✘{RESET}"
+        if fail_labels:
+            status = f"{RED}✘{RESET}"
+        elif ok_labels:
+            status = f"{GREEN}✔{RESET}"
+        else:
+            status = f"{YELLOW}—{RESET}"
         print(f"  {status} {BOLD}{fname}{RESET}")
         if ok_labels:
             print(f"     Generated: {', '.join(ok_labels)}")
+        if skip_labels:
+            print(f"     {YELLOW}Skipped (no data):{RESET} {', '.join(skip_labels)}")
         if fail_labels:
             print(f"     {RED}Failed:{RESET} {', '.join(fail_labels)}")
-        # List output files
         out_dir = os.path.dirname(h5_file)
         run_name = os.path.splitext(fname)[0]
         pngs = glob.glob(os.path.join(out_dir, f"{run_name}_*.png"))
         for png in pngs:
             print(f"     → {png}")
 
-    print(f"\n  {GREEN}✔ {total_ok} plots generated{RESET}", end="")
-    if total_fail:
-        print(f"  {RED}✘ {total_fail} failed{RESET}", end="")
-    print(f"\n{BOLD}{CYAN}{'='*60}{RESET}\n")
+    parts = []
+    if total_ok:   parts.append(f"{GREEN}✔ {total_ok} plots generated{RESET}")
+    if total_skip: parts.append(f"{YELLOW}— {total_skip} skipped (no data){RESET}")
+    if total_fail: parts.append(f"{RED}✘ {total_fail} failed{RESET}")
+    print(f"\n  {'  '.join(parts)}")
+    print(f"{BOLD}{CYAN}{'='*60}{RESET}\n")
+
 
 if __name__ == "__main__":
     main()
