@@ -38,11 +38,13 @@ fi
 echo "$((NEXT_RUN + 1))" > "$RUN_COUNTER_FILE"
 echo "  -> Next Run Number: $NEXT_RUN (persisted in run_counter.txt)"
 
-# Write the run number into the TOML config for SatelliteH5DataWriter
-sed -i "s/^run_number = .*/run_number = $NEXT_RUN/" /home/kayra/bl4s_simulation/bl4s_config.toml 2>/dev/null || true
+# H5DataWriter increments run_number by 1 internally on each START,
+# so write NEXT_RUN-1 to TOML so the actual file becomes data_run_<NEXT_RUN>.h5
+TOML_RUN=$((NEXT_RUN - 1))
+sed -i "s/^run_number = .*/run_number = $TOML_RUN/" /home/kayra/bl4s_simulation/bl4s_config.toml 2>/dev/null || true
 # Add run_number line if not already present
 grep -q "^run_number" /home/kayra/bl4s_simulation/bl4s_config.toml 2>/dev/null || \
-  sed -i "/^\[H5DataWriter/a run_number = $NEXT_RUN" /home/kayra/bl4s_simulation/bl4s_config.toml
+  sed -i "/^\[H5DataWriter/a run_number = $TOML_RUN" /home/kayra/bl4s_simulation/bl4s_config.toml
 
 find /home/kayra/bl4s_simulation -name "*.pyc" -delete 2>/dev/null || true
 find /home/kayra/bl4s_simulation -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
