@@ -6,20 +6,37 @@ pkill -9 -f "bl4s_satellites" 2>/dev/null || true
 pkill -9 -f "SatelliteH5DataWriter" 2>/dev/null || true
 pkill -9 -f "bl4s_event_explorer_server" 2>/dev/null || true
 
-# 1.5. Ensure local data directory exists, clear python cache & auto-sync to CERNBox
+# 1.5. Ensure local data directory exists, clear python cache & sync to CERNBox
 echo "[1/5] Ensuring storage directories, archiving old data and syncing to CERNBox..."
 mkdir -p /home/kayra/bl4s_simulation/data
 mkdir -p /home/kayra/bl4s_simulation/old_data
 mkdir -p /eos/user/k/kyavuz/bl4s_data 2>/dev/null || true
 
-# Copy all generated runs to CERNBox if accessible
-cp -f /home/kayra/bl4s_simulation/data/*.h5 /eos/user/k/kyavuz/bl4s_data/ 2>/dev/null || true
-cp -f /home/kayra/bl4s_simulation/*.h5 /eos/user/k/kyavuz/bl4s_data/ 2>/dev/null || true
-cp -f /home/kayra/bl4s_simulation/old_data/*.h5 /eos/user/k/kyavuz/bl4s_data/ 2>/dev/null || true
+# Copy all generated runs to CERNBox if accessible (startup sync)
+xrdcp --silent /home/kayra/bl4s_simulation/data/*.h5 "root://eosuser.cern.ch//eos/user/k/kyavuz/bl4s_data/" 2>/dev/null || \
+  cp -f /home/kayra/bl4s_simulation/data/*.h5 /eos/user/k/kyavuz/bl4s_data/ 2>/dev/null || true
 
-# Archive old data locally
-mv /home/kayra/bl4s_simulation/*.h5 /home/kayra/bl4s_simulation/old_data/ 2>/dev/null || true
+# Archive old data locally (move to old_data/ before new run)
 mv /home/kayra/bl4s_simulation/data/*.h5 /home/kayra/bl4s_simulation/old_data/ 2>/dev/null || true
+mv /home/kayra/bl4s_simulation/*.h5 /home/kayra/bl4s_simulation/old_data/ 2>/dev/null || true
+
+# Persistent Run Counter: count all existing H5 files to get next run number
+RUN_COUNTER_FILE="/home/kayra/bl4s_simulation/run_counter.txt"
+if [ -f "$RUN_COUNTER_FILE" ]; then
+    NEXT_RUN=$(cat "$RUN_COUNTER_FILE")
+else
+    # First time: count existing files across all directories
+    EXISTING=$(ls /home/kayra/bl4s_simulation/old_data/*.h5 2>/dev/null | wc -l)
+    NEXT_RUN=$((EXISTING + 1))
+fi
+echo "$((NEXT_RUN + 1))" > "$RUN_COUNTER_FILE"
+echo "  -> Next Run Number: $NEXT_RUN (persisted in run_counter.txt)"
+
+# Write the run number into the TOML config for SatelliteH5DataWriter
+sed -i "s/^run_number = .*/run_number = $NEXT_RUN/" /home/kayra/bl4s_simulation/bl4s_config.toml 2>/dev/null || true
+# Add run_number line if not already present
+grep -q "^run_number" /home/kayra/bl4s_simulation/bl4s_config.toml 2>/dev/null || \
+  sed -i "/^\[H5DataWriter/a run_number = $NEXT_RUN" /home/kayra/bl4s_simulation/bl4s_config.toml
 
 find /home/kayra/bl4s_simulation -name "*.pyc" -delete 2>/dev/null || true
 find /home/kayra/bl4s_simulation -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
